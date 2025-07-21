@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentType {
+  lotaria_nacional
+  revendedor
+}
+
+enum Genre {
+  masculino
+  feminino
+}
+
+enum AgentStatus {
+  ativo
+  inativo
+  pendente
+}
+
+enum UserRole {
+  dev
+  super_admin
+  area_manager
+  supervisor
+}
+
+model User {
+  id         String   @id @default(uuid())
+  first_name String
+  last_name  String
+  email      String   @unique
+  password   String
+  role       UserRole
+
+  created_at DateTime @default(now())
+
+  reset_password_token ResetPasswordToken?
+
+  @@map("users")
+}
+
+model Agent {
+  id               String      @id @default(uuid())
+  id_reference     Int?
+  first_name       String
+  last_name        String
+  genre            Genre
+  phone_number     Int?
+  afrimoney_number Int?
+  agent_type       AgentType
+  bi_number        String?
+  status           AgentStatus @default(pendente)
+  created_at       DateTime    @default(now())
+
+  terminal Terminal?
+  pos      Pos?
+
+  @@map("agents")
+}
+
+model Terminal {
+  id           String   @id @default(uuid())
+  id_reference Int?
+  serial       String
+  sim_card     Int
+  pin          Int?
+  puk          Int?
+  status       Boolean  @default(false)
+  agent_id     String?  @unique
+  created_at   DateTime @default(now())
+
+  agent Agent? @relation(fields: [agent_id], references: [id])
+
+  @@map("terminals")
+}
+
+model Pos {
+  id           String   @id @default(uuid())
+  id_reference Int?
+  latitude     Float
+  longitude    Float
+  agent_id     String?  @unique
+  licence_id   String?  @unique
+  created_at   DateTime @default(now())
+
+  licence Licence? @relation(fields: [licence_id], references: [id])
+  agent   Agent?   @relation(fields: [agent_id], references: [id])
+
+  @@map("pos")
+}
+
+model Licence {
+  id            String    @id @default(uuid())
+  number        String
+  description   String
+  latitude      Float?
+  longitude     Float?
+  file          String?
+  pos           Pos?
+  creation_date DateTime? @default(now())
+  created_at    DateTime  @default(now())
+  admin_id      String
+
+  admin Administration @relation(fields: [admin_id], references: [id])
+
+  @@map("licences")
+}
+
+model Administration {
+  id       String    @id @default(uuid())
+  name     String
+  licences Licence[]
+
+  @@map("administrations")
+}
+
+model Province {
+  id     String @id @default(uuid())
+  name   String @unique
+  cities City[]
+
+  @@map("provinces")
+}
+
+model City {
+  id          String @id @default(uuid())
+  name        String @unique
+  province_id String
+
+  province Province? @relation(fields: [province_id], references: [id])
+
+  @@map("cities")
+}
+
+model Area {
+  id    String @id @default(uuid())
+  name  String @unique
+  zones Zone[]
+
+  @@map("areas")
+}
+
+model Zone {
+  id      String @id @default(uuid())
+  name    String @unique
+  area_id String
+
+  area Area @relation(fields: [area_id], references: [id])
+
+  @@map("zones")
+}
+
+model Type {
+  id       String    @id @default(uuid())
+  name     String
+  subtypes Subtype[]
+
+  @@map("types")
+}
+
+model Subtype {
+  id      String @id @default(uuid())
+  name    String
+  type_id String
+
+  type Type @relation(fields: [type_id], references: [id])
+
+  @@map("subtypes")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  entity     String
+  entity_id  String?
+  user_id    String?
+  user_name  String
+  action     String
+  metadata   Json
+  created_at DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model IdReference {
+  id      Int       @id @default(autoincrement())
+  counter Int       @default(autoincrement())
+  type    AgentType
+
+  @@map("id_referecences")
+}
+
+model ResetPasswordToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user_id String @unique
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
