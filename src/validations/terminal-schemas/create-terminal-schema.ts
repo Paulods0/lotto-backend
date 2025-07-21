@@ -7,7 +7,7 @@ export const createTerminalSchema = z.object({
     pin: z.number().int().optional(),
     puk: z.number().int().optional(),
     status: z.boolean(),
-    agent_id: z.string().optional(),
+    agent_id: z.uuid().optional(),
 })
 
 export type CreateTerminalDTO = z.infer<typeof createTerminalSchema>

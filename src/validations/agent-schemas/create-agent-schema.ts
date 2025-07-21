@@ -1,5 +1,4 @@
 import z from "zod";
-
 export const agentType = z.enum(["lotaria_nacional", "revendedor"])
 export type AgentType = z.infer<typeof agentType>
 

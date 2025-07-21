@@ -191,7 +191,7 @@ model AuditLog {
 model IdReference {
   id      Int       @id @default(autoincrement())
   counter Int       @default(autoincrement())
-  type    AgentType
+  type    AgentType @unique
 
   @@map("id_referecences")
 }
