@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "tsx --watch src/index.ts"
+    "dev": "tsx --watch src/index.ts",
+    "prisma:seed": "tsx src/database/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",

@@ -1,10 +1,6 @@
 import Redis from "ioredis";
 
-const redis = new Redis({
-    host: "172.17.198.67",
-    port: 6379,
-    password: "msftsrep0."
-});
+const redis = new Redis();
 
 redis.on("ready", async () => {
     console.log("✅ Conectado ao Redis com sucesso!");

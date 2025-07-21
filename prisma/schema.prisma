@@ -102,6 +102,7 @@ model Licence {
   latitude      Float?
   longitude     Float?
   file          String?
+  reference     String
   pos           Pos?
   creation_date DateTime? @default(now())
   created_at    DateTime  @default(now())

@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
 import { AppError } from "../../errors/app-error";
-import { NextFunction, Request, Response } from "express";
 import { AuthPayload } from "../../@types/auth-payload";
+import { NextFunction, Request, Response } from "express";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "default_secret"
 
-export async function authenticate(req: Request, res: Response, next: NextFunction) {
+export async function authenticate(req: Request, _res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -19,7 +19,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
         if (
             typeof decoded === "object"
             && decoded !== null
-            && "id" in decoded
+            && "sub" in decoded
             && "email" in decoded
             && "role" in decoded
         ) {

@@ -1,11 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import env from "../../config/env";
 import prisma from "../../lib/prisma";
 import { AppError } from "../../errors/app-error";
 import { loginDTO } from "../../validations/auth/login-schema"
-
-const JWT_SECRET = process.env.JWT_SECRET ?? "default_secret";
-const JWT_EXPIRES_IN = 24 * 60 * 60;
 
 export async function loginService(data: loginDTO) {
     try {
@@ -13,7 +11,7 @@ export async function loginService(data: loginDTO) {
             where: { email: data.email }
         })
 
-        if (!existingUser) throw new AppError("Usuário não econtrado.", 404)
+        if (!existingUser) throw new AppError("Credenciais inválidas.", 400)
 
         const isSamePassword = await bcrypt.compare(data.password, existingUser.password)
 
@@ -27,12 +25,12 @@ export async function loginService(data: loginDTO) {
                 email: existingUser.email,
                 role: existingUser.role,
             },
-            JWT_SECRET,
-            { expiresIn: JWT_EXPIRES_IN }
+            env.JWT_SECRET,
+            { expiresIn: "1d" }
         );
 
         return { token }
-
+    
     } catch (error) {
         if (error instanceof AppError) {
             throw error; // ⚠️ repassa o erro original
