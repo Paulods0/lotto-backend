@@ -30,7 +30,7 @@ export async function loginService(data: loginDTO) {
         );
 
         return { token }
-    
+
     } catch (error) {
         if (error instanceof AppError) {
             throw error; // ⚠️ repassa o erro original

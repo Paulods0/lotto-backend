@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
-    "prisma:seed": "tsx src/database/seed.ts",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:gen:mg": "prisma generate && prisma migrate dev"
+    "p:seed": "tsx src/database/seed.ts",
+    "p:generate": "prisma generate",
+    "p:migrate": "prisma migrate dev",
+    "p:gen:mg": "prisma generate && prisma migrate dev"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
