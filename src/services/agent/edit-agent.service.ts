@@ -2,6 +2,7 @@ import isUUID from "../../lib/uuid";
 import prisma from "../../lib/prisma";
 import { AppError } from "../../errors/app-error";
 import { EditAgentDTO } from "../../validations/agent-schemas/edit-agent-schema";
+import redis from "../../lib/redis";
 
 export async function editAgentService(data: EditAgentDTO) {
     try {
@@ -25,6 +26,11 @@ export async function editAgentService(data: EditAgentDTO) {
                 phone_number: data.phone_number,
             }
         })
+
+        const redisKeys = await redis.keys("agents:*")
+        if(redisKeys.length > 0){
+            await redis.del(...redisKeys)
+        }
 
         return agent
 

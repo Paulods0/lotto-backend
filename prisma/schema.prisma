@@ -106,9 +106,9 @@ model Licence {
   pos           Pos?
   creation_date DateTime? @default(now())
   created_at    DateTime  @default(now())
-  admin_id      String
+  admin_id      String?
 
-  admin Administration @relation(fields: [admin_id], references: [id])
+  admin Administration? @relation(fields: [admin_id], references: [id])
 
   @@map("licences")
 }

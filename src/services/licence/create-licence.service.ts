@@ -6,15 +6,16 @@ import { CreateLicenceDTO } from "../../validations/licence-schemas/create-licen
 
 export async function createLicenceService(data: CreateLicenceDTO) {
     try {
-        const admin = await prisma.administration.findUnique({ where: { id: data.admin_id } })
-        
-        if(!admin){
-            throw new AppError("A administração não foi encontrada.", 404)
-        }
+        const admin = data.admin_id
+            ? await prisma.administration.findUnique({ where: {  id: data.admin_id  } })
+            : undefined
 
-        const licence_year = data.creation_date?.getFullYear() ?? new Date().getFullYear()
+            const adminName = admin?.name ?? "unknown"
+            const licenceNumber = data.number
+            const licenceDescription = data.description
+            const licenceCreatedAt = data.creation_date?.getFullYear() ?? new Date().getFullYear()
 
-        const licence_ref = `${admin.name}-N${data.number}-${licence_year}-PT${data.description}`
+        const licence_ref = `${adminName}-N${licenceNumber}-${licenceCreatedAt}-PT${licenceDescription}`
 
         const licence = await prisma.licence.create({
             data: {
@@ -23,7 +24,7 @@ export async function createLicenceService(data: CreateLicenceDTO) {
                 description:data.description,
                 creation_date:data.creation_date,
                 reference:licence_ref.toUpperCase(),
-                admin: { connect: { id: data.admin_id } }
+                ...(data.admin_id && { admin: { connect: { id: data.admin_id }} })
             }
         })
         

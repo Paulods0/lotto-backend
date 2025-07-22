@@ -6,7 +6,7 @@ export const createLicenceSchema = z.object({
      latitude:z.number().optional(),      
      longitude:z.number().optional(),     
      file:z.string().optional(),          
-     creation_date:z.date().optional(),
+     creation_date:z.coerce.date().optional(),
      admin_id:z.string().optional()
 })
 

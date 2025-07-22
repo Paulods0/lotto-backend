@@ -5,12 +5,35 @@ const prisma = new PrismaClient()
 async function seedData() {
 
     try {
-        await prisma.idReference.createMany({
+        await prisma.province.createMany({
             data: [
-                { counter: 1000, type: "revendedor" },
-                { counter: 9000, type: "lotaria_nacional" },
+                { name: "luanda"},
+                { name: "benguela"},
+                { name: "huambo"},
+                { name: "malanje"},
+                { name: "cunene"},
+                { name: "moxico"},
+                { name: "bié"},
+                { name: "kwanza norte"},
+                { name: "kwanza sul"},
+                { name: "cuando cubango"},
+                { name: "huíla"},
+                { name: "uíge"},
+                { name: "lunda norte"},
+                { name: "lunda sul"},
+                { name: "lunda sul"},
             ]
         })
+        
+        await prisma.area.createMany({
+                data: [
+                    { name: "a"},
+                    { name: "b"},
+                    { name: "c"},
+                    { name: "d"},
+                ]
+            })
+
         console.log("Database seeded successfuly.")
     } catch (error) {
         console.error("Error while generate seed.")

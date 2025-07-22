@@ -7,7 +7,5 @@ export async function fetchManyTerminalsController(req: Request, res: Response) 
 
     const response = await fetchManyTerminalsService({ limit, page, query })
 
-    return res.status(200).json({
-        data: response
-    })
+    return res.status(200).json({ data:response })
 }

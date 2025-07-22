@@ -1,10 +1,9 @@
 import Redis from "ioredis";
 // 172.17.198.67
+// host: "172.17.198.67",
+// password: "msftsrep0."
 
-const redis = new Redis({
-    host: "172.17.198.67",
-    password: "msftsrep0."
-});
+const redis = new Redis();
 
 redis.on("ready", async () => {
     console.log("✅ Conectado ao Redis com sucesso!");

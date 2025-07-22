@@ -1,14 +1,14 @@
 import z from "zod";
 
 export const editLicenceSchema = z.object({
-     id:z.string(),        
-     number:z.string().optional(),        
-     description:z.string().optional(),
-     latitude:z.number().optional(),      
-     longitude:z.number().optional(),     
-     file:z.string().optional(),          
-     creation_date:z.date().optional(),
-     admin_id:z.string().optional()
+     id:z.uuid(),        
+     number:z.coerce.string().optional(),        
+     description:z.coerce.string().optional(),
+     latitude:z.coerce.number().optional(),      
+     longitude:z.coerce.number().optional(),     
+     file:z.string().optional().nullable(),          
+     creation_date:z.coerce.date().optional(),
+     admin_id:z.uuid().optional()
 })
 
 export type EditLicenceDTO = z.infer<typeof editLicenceSchema>

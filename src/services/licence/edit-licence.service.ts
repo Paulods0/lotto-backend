@@ -3,33 +3,41 @@ import prisma from "../../lib/prisma";
 import { AppError } from "../../errors/app-error";
 import { EditLicenceDTO } from "../../validations/licence-schemas/edit-licence-schema";
 
-export async function editLicenceService(data: EditLicenceDTO) {
+export async function updateLicenceService(data: EditLicenceDTO) {
     try {
+        if (!data.id) throw new AppError("ID da licença não fornecido.", 400);
 
-        const admin = await prisma.administration.findUnique({ where: { id: data.admin_id } })
-        if(!admin) throw new AppError("A administração não foi encontrada.", 404)
+        const [licence, admin] = await Promise.all([
+            prisma.licence.findUnique({
+                where: { id: data.id },
+                include: { admin: true },
+            }),
+            data.admin_id
+                ? prisma.administration.findUnique({
+                    where: { id: data.admin_id },
+                }) : Promise.resolve(undefined),
+        ]);
 
-        const licence = await prisma.licence.findUnique({ include: { admin: true } ,where: { id: data.id } })
-        if (!licence) throw new Error("licence não encontrado.")
 
-        const adminName = admin.name ?? licence.admin.name 
-        const licenceNumber = data.number ?? licence.number 
-        const licenceDesc = data.description ?? licence.description
-        const licence_year = data.creation_date?.getFullYear() ?? licence.created_at.getFullYear()
-        
-        const licence_ref = `${adminName}-N${licenceNumber}-${licence_year}-PT${licenceDesc}`
+        if (!licence) throw new AppError("licence não encontrado.", 404)
+
+        const number = data.number ?? licence.number
+        const description = data.description ?? licence.description
+        const creation_date = data.creation_date?.getFullYear() ?? licence.created_at.getFullYear()
+        const adminName = admin?.name ?? licence.admin?.name
+        const reference = `${adminName ?? "unknown"}-N${number}-${creation_date}-PT${description}`.toUpperCase();
 
         await prisma.licence.update({
-            where: { id: data.id },
-            data: {
-                file:data.file,
-                number:data.number,
-                description:data.description,
-                creation_date:data.creation_date,
-                reference:licence_ref.toUpperCase(),
-                admin: { connect: { id: data.admin_id } }
-            }
-        })
+        where: { id: data.id },
+        data: {
+            reference,
+            number: data.number,
+            description: data.description,
+            creation_date: data.creation_date,
+            ...(data.file && { file: data.file }),
+            ...(data.admin_id && { admin: { connect: { id: data.admin_id } } }),
+        },
+        });
 
         const redisKeys = await redis.keys("licences:*")
         if (redisKeys.length > 0) {
@@ -39,7 +47,7 @@ export async function editLicenceService(data: EditLicenceDTO) {
         return licence.id
 
     } catch (error) {
-        console.error("Error in EditlicenceService:", error);
+        console.error("Error in updateLicenceService:", error);
         throw new AppError("Failed to edit licence", 500);
     }
 }

@@ -9,8 +9,8 @@ export const editAgentSchema = z.object({
     last_name: z.string().optional(),
     genre: genre.optional(),
     type: agentType.optional(),
-    phone_number: z.number().optional(),
-    afrimoney_number: z.number().optional(),
+    phone_number: z.coerce.number().optional(),
+    afrimoney_number: z.coerce.number().optional(),
     bi_number: z.string().optional(),
     status: agentStatus.optional(),
 

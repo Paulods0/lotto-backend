@@ -9,7 +9,6 @@ export async function createTerminalService(data: CreateTerminalDTO) {
             data: {
                 pin: data.pin,
                 puk: data.puk,
-                status: data.status,
                 serial: data.serial,
                 sim_card: data.sim_card,
                 agent: data.agent_id ? { connect: { id: data.agent_id } } : undefined,

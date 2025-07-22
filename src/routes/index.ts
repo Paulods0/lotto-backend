@@ -11,9 +11,9 @@ const router = Router()
 
 router.use("/users", userRouter)
 router.use("/auth", loginRouter)
-router.use("/pos", authenticate, posRouter)
-router.use("/agents", authenticate, agentRouter)
-router.use("/licences", authenticate, licenceRouter)
-router.use("/terminals", authenticate, terminalRouter)
+router.use("/pos", posRouter)
+router.use("/agents", agentRouter)
+router.use("/licences", licenceRouter)
+router.use("/terminals", terminalRouter)
 
 export default router
