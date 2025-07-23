@@ -11,6 +11,20 @@ export async function fetchManyPosService({ limit = 30, page, query }: Paginatio
     const DEFAULT_PAGE = page ?? 1
     const DEFAULT_QUERY = query?.trim() ?? "none"
 
+    const select = {
+            id:true,
+            id_reference:true,
+            latitude:true,
+            longitude:true,
+            agent:{
+                select:{
+                    id:true,
+                    id_reference:true,
+                    last_name:true
+                }
+            },
+    }
+
     try {
         const cacheKey = `pos:${DEFAULT_LIMIT}:page:${DEFAULT_PAGE}:query:${DEFAULT_QUERY}`;
         const cached = await redis.get(cacheKey)
@@ -32,7 +46,7 @@ export async function fetchManyPosService({ limit = 30, page, query }: Paginatio
         }
 
         if (typeof page === "undefined") {
-            const pos = await prisma.pos.findMany({ where, orderBy });
+            const pos = await prisma.pos.findMany({ where, orderBy, select });
             await redis.set(cacheKey, JSON.stringify(pos), "EX", exptime)
             return pos
         }
@@ -44,6 +58,7 @@ export async function fetchManyPosService({ limit = 30, page, query }: Paginatio
             skip: offset,
             take: DEFAULT_LIMIT,
             orderBy,
+            select
         });
 
         if (pos.length > 0) {

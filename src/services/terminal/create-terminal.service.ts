@@ -11,6 +11,17 @@ export async function createTerminalService(data: CreateTerminalDTO) {
         if(data.agent_id){
             const agent = await prisma.agent.findUnique({ where: { id: data.agent_id } })
             id_reference = agent?.id_reference
+
+            if(id_reference){
+                const existingTerminal = await prisma.terminal.findFirst({ where:{ id_reference }})
+                
+                if(existingTerminal){
+                    await prisma.terminal.update({
+                        where: {id: existingTerminal.id },
+                        data:{ id_reference: null }
+                    })
+                }
+            }
         }
 
         const terminal = await prisma.terminal.create({

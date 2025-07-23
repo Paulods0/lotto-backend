@@ -4,12 +4,35 @@ import { AppError } from "../../errors/app-error";
 import { EditTerminalDTO } from "../../validations/terminal-schemas/edit-terminal-schema";
 
 export async function editTerminalService(data: EditTerminalDTO) {
-    let id_reference  = data.id_reference
+    let id_reference = null
 
     try {
+        let agentData = undefined
+
         if(data.agent_id){
             const agent = await prisma.agent.findUnique({ where:{ id: data.agent_id } })
-            id_reference = agent?.id_reference ?? undefined
+            id_reference = agent?.id_reference ?? null
+            agentData ={ connect:{ id: data.agent_id } }
+            
+            if(id_reference !== null){
+                
+                const existingTerminal = await prisma.terminal.findFirst({ 
+                    where:{
+                        id_reference,
+                        NOT:{ id:data.id }
+                    }
+                 })
+
+                if(existingTerminal){
+                    await prisma.terminal.update({
+                        where:{ id:existingTerminal.id },
+                        data:{ id_reference: null }
+                    })
+                }
+            }
+        } else {
+            id_reference = null
+            agentData ={ disconnect:true }
         }
 
         const terminal = await prisma.terminal.findUnique({ where: { id: data.id } })
@@ -25,7 +48,7 @@ export async function editTerminalService(data: EditTerminalDTO) {
                 status: data.status,
                 serial: data.serial,
                 sim_card: data.sim_card,
-                ...(data.agent_id && { agent: { connect:{ id: data.agent_id } } })
+                agent:agentData
             }
         })
 

@@ -4,14 +4,32 @@ import { AppError } from "../../errors/app-error";
 import { CreatePosDTO } from "../../validations/pos-schemas/create-pos-schema";
 
 export async function createPosService(data: CreatePosDTO) {
+    let id_reference = undefined
     try {
+        if (data.agent_id) {
+        const agent = await prisma.agent.findUnique({ where: { id: data.agent_id } });
+        id_reference = agent?.id_reference ?? undefined;
+
+        if (id_reference) {
+            // Verificar se já existe um POS com o mesmo id_reference
+            const existingPos = await prisma.pos.findFirst({ where: { id_reference } });
+
+            if (existingPos) {
+                // Atualizar o POS existente para remover o id_reference
+                await prisma.pos.update({
+                    where: { id: existingPos.id },
+                    data: { id_reference: null }
+                });
+            }
+        }
+}
         const pos = await prisma.pos.create({
             data: {
+                id_reference,
                 latitude: data.latitude,
                 longitude: data.longitude,
-                id_reference: data.id_reference,
-                licence: data.licence_id ? { connect: { id: data.licence_id } } : undefined,
-                agent: data.agent_id ? { connect: { id: data.agent_id } } : undefined,
+                ...(data.agent_id && { agent: { connect:{ id: data.agent_id } } }),
+                ...(data.licence_id && { licence: { connect:{ id: data.licence_id } } })
             }
         })
 

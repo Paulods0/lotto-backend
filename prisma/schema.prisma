@@ -82,7 +82,7 @@ model Terminal {
 
 model Pos {
   id           String   @id @default(uuid())
-  id_reference Int?
+  id_reference Int?     @unique
   latitude     Float
   longitude    Float
   agent_id     String?  @unique
