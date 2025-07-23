@@ -56,6 +56,23 @@ export async function fetchManyTerminalsService({ limit = 30, page, query }: Pag
             skip: offset,
             take: DEFAULT_LIMIT,
             orderBy,
+            select:{
+                id:true,
+                id_reference:true,
+                pin:true,
+                puk:true,
+                serial:true,
+                sim_card:true,
+                status:true,
+                agent:{
+                    select:{
+                        id:true,
+                        id_reference:true,
+                        first_name:true,
+                        last_name:true
+                    }
+                }
+            }
         });
 
         if (terminals.length > 0) {

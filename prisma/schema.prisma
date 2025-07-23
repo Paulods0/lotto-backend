@@ -149,7 +149,7 @@ model Area {
 
 model Zone {
   id      String @id @default(uuid())
-  name    String @unique
+  number  Int    @unique
   area_id String
 
   area Area @relation(fields: [area_id], references: [id])

@@ -1,12 +1,16 @@
-import isUUID from "../../lib/uuid";
 import redis from "../../lib/redis";
 import prisma from "../../lib/prisma";
 import { AppError } from "../../errors/app-error";
 import { EditTerminalDTO } from "../../validations/terminal-schemas/edit-terminal-schema";
 
 export async function editTerminalService(data: EditTerminalDTO) {
+    let id_reference  = data.id_reference
+
     try {
-        if (!isUUID(data.id)) throw new Error("ID inválido.")
+        if(data.agent_id){
+            const agent = await prisma.agent.findUnique({ where:{ id: data.agent_id } })
+            id_reference = agent?.id_reference ?? undefined
+        }
 
         const terminal = await prisma.terminal.findUnique({ where: { id: data.id } })
 
@@ -15,12 +19,13 @@ export async function editTerminalService(data: EditTerminalDTO) {
         await prisma.terminal.update({
             where: { id: data.id },
             data: {
+                id_reference,
                 pin: data.pin,
                 puk: data.puk,
                 status: data.status,
                 serial: data.serial,
                 sim_card: data.sim_card,
-                agent: data.agent_id ? { connect: { id: data.agent_id } } : undefined
+                ...(data.agent_id && { agent: { connect:{ id: data.agent_id } } })
             }
         })
 

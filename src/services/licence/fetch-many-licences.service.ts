@@ -42,6 +42,7 @@ export async function fetchManyLicencesService({ limit = 30, page, query }: Pagi
             skip: offset,
             take: DEFAULT_LIMIT,
             orderBy,
+            select: { admin:{ select: { name:true, licences:true }} }
         });
 
         if (licences.length > 0) {

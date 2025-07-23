@@ -4,14 +4,23 @@ import { AppError } from "../../errors/app-error";
 import { CreateTerminalDTO } from "../../validations/terminal-schemas/create-terminal-schema";
 
 export async function createTerminalService(data: CreateTerminalDTO) {
+    let id_reference = undefined
+
     try {
+        
+        if(data.agent_id){
+            const agent = await prisma.agent.findUnique({ where: { id: data.agent_id } })
+            id_reference = agent?.id_reference
+        }
+
         const terminal = await prisma.terminal.create({
             data: {
+                id_reference,
                 pin: data.pin,
                 puk: data.puk,
                 serial: data.serial,
                 sim_card: data.sim_card,
-                agent: data.agent_id ? { connect: { id: data.agent_id } } : undefined,
+                ...(data.agent_id && { agent: { connect:{ id: data.agent_id } } }),
             }
         })
 

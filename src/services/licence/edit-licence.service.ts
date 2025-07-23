@@ -42,6 +42,7 @@ export async function updateLicenceService(data: EditLicenceDTO) {
         const redisKeys = await redis.keys("licences:*")
         if (redisKeys.length > 0) {
             await redis.del(...redisKeys)
+            await redis.del("admins")
         }
 
         return licence.id
