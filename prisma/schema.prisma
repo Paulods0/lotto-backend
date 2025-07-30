@@ -88,7 +88,7 @@ model Pos {
   agent_id     String?  @unique
   licence_id   String?  @unique
   created_at   DateTime @default(now())
-
+      
   licence Licence? @relation(fields: [licence_id], references: [id])
   agent   Agent?   @relation(fields: [agent_id], references: [id])
 
@@ -122,7 +122,7 @@ model Administration {
 }
 
 model Province {
-  id     String @id @default(uuid())
+  id     Int @id @default(autoincrement())
   name   String @unique
   cities City[]
 
@@ -130,9 +130,9 @@ model Province {
 }
 
 model City {
-  id          String @id @default(uuid())
+  id          Int @id @default(autoincrement())
   name        String @unique
-  province_id String
+  province_id Int
 
   province Province? @relation(fields: [province_id], references: [id])
 
@@ -140,7 +140,7 @@ model City {
 }
 
 model Area {
-  id    String @id @default(uuid())
+  id    Int @id @default(autoincrement())
   name  String @unique
   zones Zone[]
 
@@ -148,9 +148,9 @@ model Area {
 }
 
 model Zone {
-  id      String @id @default(uuid())
+  id      Int @id @default(autoincrement())
   number  Int    @unique
-  area_id String
+  area_id Int
 
   area Area @relation(fields: [area_id], references: [id])
 
@@ -158,7 +158,7 @@ model Zone {
 }
 
 model Type {
-  id       String    @id @default(uuid())
+  id       Int    @id @default(autoincrement())
   name     String
   subtypes Subtype[]
 
@@ -166,9 +166,9 @@ model Type {
 }
 
 model Subtype {
-  id      String @id @default(uuid())
+  id      Int @id @default(autoincrement())
   name    String
-  type_id String
+  type_id Int
 
   type Type @relation(fields: [type_id], references: [id])
 

@@ -1,10 +1,12 @@
-export class AppError extends Error {
-    public readonly statusCode: number;
+import { HttpStatus } from '../constants/http';
 
-    constructor(message: string, statusCode = 500) {
-        super(message);
-        this.name = "AppError";
-        this.statusCode = statusCode;
-        Error.captureStackTrace(this, this.constructor);
-    }
+export default class AppError extends Error {
+  public readonly statusCode: number;
+
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = this.constructor.name;
+    this.statusCode = statusCode || HttpStatus.BAD_REQUEST;
+    Error.captureStackTrace(this, this.constructor);
+  }
 }

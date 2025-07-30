@@ -1,29 +1,27 @@
-import type { Request, Response, NextFunction } from "express";
-import { AppError } from "../errors/app-error";
-import { ZodError } from "zod";
+import type { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
+import { HttpStatus } from '../constants/http';
+import { AppError } from '../errors';
 
-export function errorHandler(
-    err: Error,
-    req: Request,
-    res: Response,
-    next: NextFunction
-) {
-    if (err instanceof AppError) {
-        return res.status(err.statusCode).json({
-            error: err.message,
-        });
-    }
-
-    if (err instanceof ZodError) {
-        return res.status(400).json({
-            error: "Dados inválidos",
-            details: err.issues
-        });
-    }
-
-    console.error("Erro não tratado:", err);
-
-    return res.status(500).json({
-        error: "Erro interno do servidor",
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+  if (err instanceof AppError) {
+    console.error(`PATH: ${req.path} - METHOD: ${req.method}`, err);
+    return res.status(err.statusCode).json({
+      message: err.message,
     });
+  }
+
+  if (err instanceof ZodError) {
+    console.error(`PATH: ${req.path} - METHOD: ${req.method}`, err);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      error: 'Dados inválidos',
+      message: err.issues,
+    });
+  }
+
+  console.error(`UNHANDLED ERRRO - PATH: ${req.path} - METHOD: ${req.method}`, err);
+
+  return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+    message: 'Erro interno do servidor.',
+  });
 }

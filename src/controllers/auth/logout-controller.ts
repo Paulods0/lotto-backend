@@ -1,20 +1,16 @@
-import type { Request, Response } from "express"
+import type { Request, Response } from 'express';
+import { HttpStatus } from '../../constants/http';
 
-export async function extractToken(req: Request) {
-    const authHeader = req.headers.authorization
-    if(!authHeader) return null
+export async function logoutController(req: Request, res: Response) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
 
-    const parts = authHeader.split(" ")
-    if(parts.length !== 2 || parts[0] !== "Bearer") return null
-    
-    const token = parts[1]
-    return token
-}
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') return null;
 
-export async function logoutController(req:Request, res:Response) {
-        const token = extractToken(req)
+  const token = parts[1];
 
-        if(!token) return res.status(400).json({ message:"Token não fornecido." })
-
-        return res.status(200).json({ message:"Logout realizado com sucesso." })
+  if (!token) return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Token não fornecido.' });
+  res.clearCookie('refreshToken');
+  return res.status(HttpStatus.OK).json({ message: 'Logout realizado com sucesso.' });
 }

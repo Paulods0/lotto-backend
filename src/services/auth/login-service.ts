@@ -1,42 +1,27 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import env from "../../config/env";
-import prisma from "../../lib/prisma";
-import { AppError } from "../../errors/app-error";
-import { loginDTO } from "../../validations/auth/login-schema"
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import env from '../../constants/env';
+import prisma from '../../lib/prisma';
+import { BadRequestError } from '../../errors';
+import { loginDTO } from '../../validations/auth/login-schema';
 
 export async function loginService(data: loginDTO) {
-    try {
-        const existingUser = await prisma.user.findUnique({
-            where: { email: data.email }
-        })
+  const existingUser = await prisma.user.findUnique({
+    where: { email: data.email },
+  });
 
-        if (!existingUser) throw new AppError("Credenciais inválidas.", 400)
+  if (!existingUser) throw new BadRequestError('Credenciais inválidas.');
 
-        const isSamePassword = await bcrypt.compare(data.password, existingUser.password)
+  const isSamePassword = await bcrypt.compare(data.password, existingUser.password);
 
-        if (!isSamePassword) {
-            throw new AppError("Credenciais inválidas.", 400)
-        }
+  if (!isSamePassword) {
+    throw new BadRequestError('Credenciais inválidas.');
+  }
 
-        const token = jwt.sign(
-            {
-                sub: existingUser.id,
-                email: existingUser.email,
-                role: existingUser.role,
-            },
-            env.JWT_SECRET,
-            { expiresIn: "1d" }
-        );
+  const user = { sub: existingUser.id, email: existingUser.email, role: existingUser.role };
 
-        return { token }
+  const accessToken = jwt.sign(user, env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+  const refreshToken = jwt.sign(user, env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 
-    } catch (error) {
-        if (error instanceof AppError) {
-            throw error; // ⚠️ repassa o erro original
-        }
-
-        console.error("Error on loginService: ", error);
-        throw new AppError("Erro interno ao tentar logar.", 500);
-    }
+  return { accessToken, refreshToken };
 }

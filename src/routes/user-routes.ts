@@ -1,17 +1,18 @@
-import { Router } from "express";
+import { Router } from 'express';
 
-import { getUserController } from "../controllers/user/get-user-controller";
-import { editUserController } from "../controllers/user/edit-user-controller";
-import { createUserController } from "../controllers/user/create-user-controller";
-import { deleteUserController } from "../controllers/user/delete-user-controller";
-import { fetchManyUsersController } from "../controllers/user/fetch-many-users-controller";
+import { getUserController } from '../controllers/user/get-user-controller';
+import { editUserController } from '../controllers/user/edit-user-controller';
+import { createUserController } from '../controllers/user/create-user-controller';
+import { deleteUserController } from '../controllers/user/delete-user-controller';
+import { fetchManyUsersController } from '../controllers/user/fetch-many-users-controller';
+import catchErrors from '../utils/catch-errors';
 
-const userRouter = Router()
+const userRouter = Router();
 
-userRouter.post("/", createUserController)
-userRouter.put("/:id", editUserController)
-userRouter.delete("/:id", deleteUserController)
-userRouter.get("/:id", getUserController)
-userRouter.get("/", fetchManyUsersController)
+userRouter.post('/', catchErrors(createUserController));
+userRouter.put('/:id', catchErrors(editUserController));
+userRouter.delete('/:id', catchErrors(deleteUserController));
+userRouter.get('/:id', catchErrors(getUserController));
+userRouter.get('/', catchErrors(fetchManyUsersController));
 
-export default userRouter
+export default userRouter;
