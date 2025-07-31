@@ -26,8 +26,14 @@ export async function createPosService(data: CreatePosDTO) {
       id_reference,
       latitude: data.latitude,
       longitude: data.longitude,
+      ...(data.type_id && { type: { connect: { id: data.type_id } } }),
+      ...(data.area_id && { area: { connect: { id: data.area_id } } }),
+      ...(data.zone_id && { zone: { connect: { id: data.zone_id } } }),
+      ...(data.city_id && { city: { connect: { id: data.city_id } } }),
+      ...(data.admin_id && { admin: { connect: { id: data.admin_id } } }),
       ...(data.agent_id && { agent: { connect: { id: data.agent_id } } }),
       ...(data.licence_id && { licence: { connect: { id: data.licence_id } } }),
+      ...(data.province_id && { province: { connect: { id: data.province_id } } }),
     },
   });
 

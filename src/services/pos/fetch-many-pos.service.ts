@@ -15,6 +15,12 @@ export async function fetchManyPosService({ limit = 30, page, query }: Paginatio
     id_reference: true,
     latitude: true,
     longitude: true,
+    type: true,
+    admin: true,
+    province: true,
+    area: true,
+    zone: true,
+    city: true,
     agent: {
       select: {
         id: true,

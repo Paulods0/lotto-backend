@@ -46,13 +46,14 @@ export async function editPosService(data: EditPosDTO) {
       longitude: data.longitude,
       agent: agentData,
       ...(data.licence_id && { licence: { connect: { id: data.licence_id } } }),
+      ...(data.type_id && { type: { connect: { id: data.type_id } } }),
+      ...(data.area_id && { area: { connect: { id: data.area_id } } }),
+      ...(data.zone_id && { zone: { connect: { id: data.zone_id } } }),
+      ...(data.city_id && { city: { connect: { id: data.city_id } } }),
+      ...(data.admin_id && { admin: { connect: { id: data.admin_id } } }),
+      ...(data.agent_id && { agent: { connect: { id: data.agent_id } } }),
+      ...(data.licence_id && { licence: { connect: { id: data.licence_id } } }),
+      ...(data.province_id && { province: { connect: { id: data.province_id } } }),
     },
   });
-
-  const redisKeys = await redis.keys('pos:*');
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
-  }
-
-  return pos.id;
 }

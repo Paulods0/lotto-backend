@@ -87,10 +87,24 @@ model Pos {
   longitude    Float
   agent_id     String?  @unique
   licence_id   String?  @unique
+  type_id     Int?  @unique
+  subtype_id   Int?  @unique
+  area_id   Int?  @unique
+  zone_id   Int?  @unique
+  city_id   Int?  @unique
+  admin_id   Int?  @unique
+  province_id   Int?  @unique
   created_at   DateTime @default(now())
-      
-  licence Licence? @relation(fields: [licence_id], references: [id])
+  
+  type Type? @relation(fields: [type_id],references: [id] )
+  area Area? @relation(fields: [area_id],references: [id] )
+  zone Zone? @relation(fields: [zone_id],references: [id] )
+  city City? @relation(fields: [city_id],references: [id] )
   agent   Agent?   @relation(fields: [agent_id], references: [id])
+  subtype Subtype? @relation(fields: [subtype_id],references: [id])
+  licence Licence? @relation(fields: [licence_id], references: [id])
+  province Province? @relation(fields: [province_id],references: [id])
+  admin Administration? @relation(fields: [admin_id],references: [id])
 
   @@map("pos")
 }
@@ -102,11 +116,11 @@ model Licence {
   latitude      Float?
   longitude     Float?
   file          String?
-  reference     String
-  pos           Pos?
+  reference     String  
+  pos           Pos?  
   creation_date DateTime? @default(now())
   created_at    DateTime  @default(now())
-  admin_id      String?
+  admin_id      Int?
 
   admin Administration? @relation(fields: [admin_id], references: [id])
 
@@ -114,9 +128,10 @@ model Licence {
 }
 
 model Administration {
-  id       String    @id @default(uuid())
+  id       Int    @id @default(autoincrement())
   name     String
   licences Licence[]
+  pos Pos[]
 
   @@map("administrations")
 }
@@ -125,6 +140,7 @@ model Province {
   id     Int @id @default(autoincrement())
   name   String @unique
   cities City[]
+  pos Pos[]
 
   @@map("provinces")
 }
@@ -133,6 +149,7 @@ model City {
   id          Int @id @default(autoincrement())
   name        String @unique
   province_id Int
+  pos Pos[]
 
   province Province? @relation(fields: [province_id], references: [id])
 
@@ -143,6 +160,7 @@ model Area {
   id    Int @id @default(autoincrement())
   name  String @unique
   zones Zone[]
+  pos Pos[]
 
   @@map("areas")
 }
@@ -153,6 +171,7 @@ model Zone {
   area_id Int
 
   area Area @relation(fields: [area_id], references: [id])
+  pos Pos[]
 
   @@map("zones")
 }
@@ -161,6 +180,7 @@ model Type {
   id       Int    @id @default(autoincrement())
   name     String
   subtypes Subtype[]
+  pos Pos[]
 
   @@map("types")
 }
@@ -171,6 +191,7 @@ model Subtype {
   type_id Int
 
   type Type @relation(fields: [type_id], references: [id])
+  pos Pos[]
 
   @@map("subtypes")
 }
