@@ -50,6 +50,20 @@ export async function editAgentService(data: EditAgentDTO) {
     },
   });
 
+  await prisma.auditLog.create({
+    data: {
+      entity_id: data.id,
+      action: 'update',
+      entity: 'agent',
+      metadata: {
+        old: data,
+        new: updatedAgent,
+      },
+      user_id: data.user.id,
+      user_name: data.user.name,
+    },
+  });
+
   try {
     await deleteKeysByPattern('agents:*');
   } catch (error) {

@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUser } from '../agent-schemas/create-agent-schema';
 
 export const createPosSchema = z.object({
   id_reference: z.number().int().optional(),
@@ -16,6 +17,7 @@ export const createPosSchema = z.object({
   area_id: z.coerce.number().optional(),
   admin_id: z.coerce.number().optional(),
   zone_id: z.coerce.number().optional(),
+  user: currentUser,
 });
 
 export type CreatePosDTO = z.infer<typeof createPosSchema>;

@@ -36,7 +36,7 @@ export async function editPosService(data: EditPosDTO) {
     agentUpdate = { disconnect: true };
   }
 
-  await prisma.pos.update({
+  const updatedPos = await prisma.pos.update({
     where: { id: data.id },
     data: {
       id_reference,
@@ -53,6 +53,19 @@ export async function editPosService(data: EditPosDTO) {
     },
   });
 
+  await prisma.auditLog.create({
+    data: {
+      entity_id: data.id,
+      action: 'update',
+      entity: 'pos',
+      metadata: {
+        old: data,
+        new: updatedPos,
+      },
+      user_id: data.user.id,
+      user_name: data.user.name,
+    },
+  });
   // Limpa cache Redis relacionada a POS
   try {
     await deleteKeysByPattern('pos:*');

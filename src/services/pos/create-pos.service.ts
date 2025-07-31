@@ -50,6 +50,19 @@ export async function createPosService(data: CreatePosDTO) {
     },
   });
 
+  await prisma.auditLog.create({
+    data: {
+      entity_id: pos.id,
+      action: 'create',
+      entity: 'pos',
+      metadata: {
+        data: pos,
+      },
+      user_id: data.user.id,
+      user_name: data.user.name,
+    },
+  });
+
   // Limpar o cache relacionado a POS
   try {
     await deleteKeysByPattern('pos:*');

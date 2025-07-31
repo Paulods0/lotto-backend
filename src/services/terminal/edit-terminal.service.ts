@@ -1,7 +1,7 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { EditTerminalDTO } from '../../validations/terminal-schemas/edit-terminal-schema';
 import deleteKeysByPattern from '../../utils/redis';
+import { EditTerminalDTO } from '../../validations/terminal-schemas/edit-terminal-schema';
 
 export async function editTerminalService(data: EditTerminalDTO) {
   let id_reference = null;
@@ -69,7 +69,7 @@ export async function editTerminalService(data: EditTerminalDTO) {
     throw new NotFoundError('Terminal não encontrado.');
   }
 
-  await prisma.terminal.update({
+  const terminalUpdated = await prisma.terminal.update({
     where: { id: data.id },
     data: {
       id_reference,
@@ -80,6 +80,20 @@ export async function editTerminalService(data: EditTerminalDTO) {
       sim_card: data.sim_card,
       agent: agentData,
       ...relatedFields, // adiciona os relacionamentos com type, subtype etc.
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      entity_id: data.id,
+      action: 'update',
+      entity: 'terminal',
+      metadata: {
+        old: data,
+        new: terminalUpdated,
+      },
+      user_id: data.user.id,
+      user_name: data.user.name,
     },
   });
 

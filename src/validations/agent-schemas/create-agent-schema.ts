@@ -8,6 +8,11 @@ export type AgentStatus = z.infer<typeof agentStatus>;
 export const genre = z.enum(['masculino', 'feminino']);
 export type Genre = z.infer<typeof genre>;
 
+export const currentUser = z.object({
+  id: z.uuid(),
+  name: z.string(),
+});
+
 export const createAgentSchema = z.object({
   id_reference: z.number().optional(),
 
@@ -22,6 +27,8 @@ export const createAgentSchema = z.object({
 
   pos_id: z.uuid().optional(),
   terminal_id: z.uuid().optional(),
+
+  user: currentUser,
 });
 
 export type CreateAgentDTO = z.infer<typeof createAgentSchema>;

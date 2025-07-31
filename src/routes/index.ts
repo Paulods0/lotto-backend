@@ -5,6 +5,7 @@ import agentRouter from './agent-routes';
 import loginRouter from './auth-router';
 import licenceRouter from './licence-routes';
 import terminalRouter from './terminal-routes';
+import auditLogRouter from './audit-log-routes';
 import { authenticate } from '../middleware/auth/authenticate';
 import { logoutController } from '../controllers/auth/logout-controller';
 import { refreshTokenController } from '../controllers/auth/refresh-token';
@@ -28,6 +29,8 @@ router.use('/admins', authenticate, adminRoutes);
 router.use('/types', authenticate, typesRoutes);
 router.use('/areas', authenticate, areasRoutes);
 router.use('/provinces', authenticate, provincesRoutes);
+
+router.use('/audit-logs', authenticate, auditLogRouter);
 
 //refresh token
 router.post('/refresh-token', refreshTokenController);

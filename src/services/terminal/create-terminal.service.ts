@@ -57,6 +57,19 @@ export async function createTerminalService(data: CreateTerminalDTO) {
     },
   });
 
+  await prisma.auditLog.create({
+    data: {
+      entity_id: terminal.id,
+      action: 'create',
+      entity: 'terminal',
+      metadata: {
+        data: terminal,
+      },
+      user_id: data.user.id,
+      user_name: data.user.name,
+    },
+  });
+
   // Limpar cache Redis
   try {
     await deleteKeysByPattern('terminals:*');

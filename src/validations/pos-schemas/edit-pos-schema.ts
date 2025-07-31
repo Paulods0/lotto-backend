@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUser } from '../agent-schemas/create-agent-schema';
 
 export const editPosSchema = z.object({
   id: z.uuid(),
@@ -17,6 +18,7 @@ export const editPosSchema = z.object({
   longitude: z.coerce.number().optional(),
   subtype_id: z.coerce.number().optional(),
   province_id: z.coerce.number().optional(),
+  user: currentUser,
 });
 
 export type EditPosDTO = z.infer<typeof editPosSchema>;

@@ -1,9 +1,11 @@
+import z from 'zod';
 import isUUID from '../../lib/uuid';
 import prisma from '../../lib/prisma';
-import { BadRequestError, NotFoundError } from '../../errors';
 import deleteKeysByPattern from '../../utils/redis';
+import { BadRequestError, NotFoundError } from '../../errors';
+import { currentUser } from './../../validations/agent-schemas/create-agent-schema';
 
-export async function deletePosService(id: string) {
+export async function deletePosService(id: string, data: { user: z.infer<typeof currentUser> }) {
   if (!isUUID(id)) {
     throw new BadRequestError('O ID fornecido não é um UUID válido.');
   }
@@ -15,6 +17,19 @@ export async function deletePosService(id: string) {
   }
 
   await prisma.pos.delete({ where: { id } });
+
+  await prisma.auditLog.create({
+    data: {
+      entity_id: id,
+      action: 'delete',
+      entity: 'pos',
+      metadata: {
+        data: pos,
+      },
+      user_id: data.user.id,
+      user_name: data.user.name,
+    },
+  });
 
   try {
     await deleteKeysByPattern('pos:*');
