@@ -1,34 +1,60 @@
-import isUUID from '../../lib/uuid';
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
+import { NotFoundError } from '../../errors';
+import deleteKeysByPattern from '../../utils/redis';
 import { EditAgentDTO } from '../../validations/agent-schemas/edit-agent-schema';
-import { BadRequestError, InternalServerError, NotFoundError } from '../../errors';
 
 export async function editAgentService(data: EditAgentDTO) {
-  if (!isUUID(data.id)) throw new BadRequestError('ID inválido.');
+  const { id, type, first_name, last_name, genre, afrimoney_number, bi_number, status, phone_number, pos_id } = data;
 
-  const agent = await prisma.agent.findUnique({ where: { id: data.id } });
+  const existingAgent = await prisma.agent.findUnique({ where: { id } });
 
-  if (!agent) throw new NotFoundError('Agente não encontrado.');
+  if (!existingAgent) {
+    throw new NotFoundError('Agente não encontrado.');
+  }
 
-  await prisma.agent.update({
-    where: { id: data.id },
+  const pos = pos_id
+    ? await prisma.pos.findUnique({
+        where: { id: pos_id },
+        select: {
+          id: true,
+          type: true,
+          subtype: true,
+          area: true,
+          zone: true,
+          province: true,
+        },
+      })
+    : undefined;
+
+  const connectRelations = {
+    ...(pos_id && { pos: { connect: { id: pos_id } } }),
+    ...(pos?.type && { type: { connect: { id: pos.type.id } } }),
+    ...(pos?.subtype && { subtype: { connect: { id: pos.subtype.id } } }),
+    ...(pos?.area && { area: { connect: { id: pos.area.id } } }),
+    ...(pos?.zone && { zone: { connect: { id: pos.zone.id } } }),
+    ...(pos?.province && { province: { connect: { id: pos.province.id } } }),
+  };
+
+  const updatedAgent = await prisma.agent.update({
+    where: { id },
     data: {
-      agent_type: data.type,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      genre: data.genre,
-      afrimoney_number: data.afrimoney_number,
-      bi_number: data.bi_number,
-      status: data.status,
-      phone_number: data.phone_number,
+      agent_type: type,
+      first_name,
+      last_name,
+      genre,
+      afrimoney_number,
+      bi_number,
+      status,
+      phone_number,
+      ...connectRelations,
     },
   });
 
-  const redisKeys = await redis.keys('agents:*');
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+  try {
+    await deleteKeysByPattern('agents:*');
+  } catch (error) {
+    console.warn('Erro ao limpar o cache do Redis:', error);
   }
 
-  return agent;
+  return updatedAgent;
 }

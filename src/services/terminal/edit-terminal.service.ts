@@ -1,16 +1,33 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { EditTerminalDTO } from '../../validations/terminal-schemas/edit-terminal-schema';
+import deleteKeysByPattern from '../../utils/redis';
 
 export async function editTerminalService(data: EditTerminalDTO) {
   let id_reference = null;
+  let agentData: any = undefined;
 
-  let agentData = undefined;
+  let relatedFields = {};
 
   if (data.agent_id) {
-    const agent = await prisma.agent.findUnique({ where: { id: data.agent_id } });
-    id_reference = agent?.id_reference ?? null;
+    const agent = await prisma.agent.findUnique({
+      where: { id: data.agent_id },
+      select: {
+        id_reference: true,
+        subtype: true,
+        area: true,
+        zone: true,
+        province: true,
+        city: true,
+      },
+    });
+
+    if (!agent) {
+      throw new NotFoundError('Agente não encontrado.');
+    }
+
+    id_reference = agent.id_reference ?? null;
+
     agentData = { connect: { id: data.agent_id } };
 
     if (id_reference !== null) {
@@ -28,14 +45,29 @@ export async function editTerminalService(data: EditTerminalDTO) {
         });
       }
     }
+
+    data.status = true;
+
+    // Campos relacionados ao agente
+    relatedFields = {
+      area: agent.area ? { connect: { id: agent.area.id } } : undefined,
+      zone: agent.zone ? { connect: { id: agent.zone.id } } : undefined,
+      province: agent.province ? { connect: { id: agent.province.id } } : undefined,
+      city: agent.city ? { connect: { id: agent.city.id } } : undefined,
+    };
   } else {
     id_reference = null;
     agentData = { disconnect: true };
+    data.status = false;
   }
 
-  const terminal = await prisma.terminal.findUnique({ where: { id: data.id } });
+  const terminal = await prisma.terminal.findUnique({
+    where: { id: data.id },
+  });
 
-  if (!terminal) throw new NotFoundError('Terminal não encontrado.');
+  if (!terminal) {
+    throw new NotFoundError('Terminal não encontrado.');
+  }
 
   await prisma.terminal.update({
     where: { id: data.id },
@@ -47,12 +79,14 @@ export async function editTerminalService(data: EditTerminalDTO) {
       serial: data.serial,
       sim_card: data.sim_card,
       agent: agentData,
+      ...relatedFields, // adiciona os relacionamentos com type, subtype etc.
     },
   });
 
-  const redisKeys = await redis.keys('terminals:*');
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+  try {
+    await deleteKeysByPattern('terminals:*');
+  } catch (error) {
+    console.warn(`[Redis] Falha ao limpar o cache para padrão "terminals:*":`, error);
   }
 
   return terminal.id;

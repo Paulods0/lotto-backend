@@ -1,0 +1,3 @@
+id,id_reference,latitude,longitude,agent_id,licence_id,created_at,admin_id,area_id,province_id,subtype_id,type_id,zone_id,city_id
+2c043ea9-6f72-4927-b605-ef68ad6d8e56,,-8.847238317723155,13.2259777082725,,,2025-07-31 02:31:44.408,3,1,2,,3,3,6
+4e616b5b-9723-4806-bf8f-fc26f1772d1d,10001,-8.846994490427823,13.22516231674669,510004b8-641c-422e-9d74-02e0af8d5068,,2025-07-31 01:50:55.538,1,4,1,,1,17,1

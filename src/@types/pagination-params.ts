@@ -1,4 +1,4 @@
-import z from "zod";
-import { paramsSchema } from "../validations/@common/query.schema";
+import z from 'zod';
+import { paramsSchema } from '../validations/@common/query.schema';
 
-export type PaginationParams = z.infer<typeof paramsSchema>
+export type PaginationParams = z.infer<typeof paramsSchema>;

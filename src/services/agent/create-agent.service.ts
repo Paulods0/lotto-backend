@@ -1,10 +1,36 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
+import deleteKeysByPattern from '../../utils/redis';
 import { generateIdReference } from '../../utils/generate-id-reference';
 import { CreateAgentDTO } from '../../validations/agent-schemas/create-agent-schema';
 
 export async function createAgentService(data: CreateAgentDTO) {
   const id_reference = await generateIdReference(data.type);
+
+  const pos = data.pos_id
+    ? await prisma.pos.findUnique({
+        where: { id: data.pos_id },
+        select: {
+          id: true,
+          type: true,
+          area: true,
+          zone: true,
+          city: true,
+          subtype: true,
+          province: true,
+        },
+      })
+    : undefined;
+
+  const connectRelations = {
+    ...(data.pos_id && { pos: { connect: { id: data.pos_id } } }),
+    ...(data.terminal_id && { terminal: { connect: { id: data.terminal_id } } }),
+    ...(pos?.type && { type: { connect: { id: pos.type.id } } }),
+    ...(pos?.subtype && { subtype: { connect: { id: pos.subtype.id } } }),
+    ...(pos?.area && { area: { connect: { id: pos.area.id } } }),
+    ...(pos?.zone && { connect: { id: pos.zone.id } }),
+    ...(pos?.province && { province: { connect: { id: pos.province.id } } }),
+    ...(pos?.city && { city: { connect: { id: pos.city.id } } }),
+  };
 
   const agent = await prisma.agent.create({
     data: {
@@ -17,14 +43,14 @@ export async function createAgentService(data: CreateAgentDTO) {
       bi_number: data.bi_number,
       status: data.status,
       phone_number: data.phone_number,
-      ...(data.pos_id && { pos: { connect: { id: data.pos_id } } }),
-      ...(data.pos_id && { terminal: { connect: { id: data.terminal_id } } }),
+      ...connectRelations,
     },
   });
-  const redisKeys = await redis.keys('agents:*');
 
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+  try {
+    await deleteKeysByPattern('agents:*');
+  } catch (err) {
+    console.warn('Erro ao limpar cache de agentes no Redis:', err);
   }
 
   return agent;

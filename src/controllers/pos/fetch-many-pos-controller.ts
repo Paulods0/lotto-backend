@@ -3,7 +3,9 @@ import { paramsSchema } from '../../validations/@common/query.schema';
 import { fetchManyPosService } from '../../services/pos/fetch-many-pos.service';
 
 export async function fetchManyPosController(req: Request, res: Response) {
-  const { limit, page, query } = paramsSchema.parse(req.query);
-  const response = await fetchManyPosService({ limit, page, query });
-  return res.status(200).json(response);
+  const query = paramsSchema.parse(req.query);
+
+  const result = await fetchManyPosService(query);
+
+  return res.status(200).json(result);
 }

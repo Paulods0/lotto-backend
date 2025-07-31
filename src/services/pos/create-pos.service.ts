@@ -1,19 +1,30 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
+import deleteKeysByPattern from '../../utils/redis';
 import { CreatePosDTO } from '../../validations/pos-schemas/create-pos-schema';
 
 export async function createPosService(data: CreatePosDTO) {
-  let id_reference = undefined;
+  let id_reference: number | null = null;
+
+  // Se um agente foi fornecido, verificar id_reference
   if (data.agent_id) {
-    const agent = await prisma.agent.findUnique({ where: { id: data.agent_id } });
-    id_reference = agent?.id_reference ?? undefined;
+    const agent = await prisma.agent.findUnique({
+      where: { id: data.agent_id },
+    });
+
+    if (!agent) {
+      throw new Error('Agente não encontrado');
+    }
+
+    id_reference = agent.id_reference ?? null;
 
     if (id_reference) {
       // Verificar se já existe um POS com o mesmo id_reference
-      const existingPos = await prisma.pos.findFirst({ where: { id_reference } });
+      const existingPos = await prisma.pos.findFirst({
+        where: { id_reference },
+      });
 
       if (existingPos) {
-        // Atualizar o POS existente para remover o id_reference
+        // Atualizar POS antigo para remover o id_reference
         await prisma.pos.update({
           where: { id: existingPos.id },
           data: { id_reference: null },
@@ -21,6 +32,8 @@ export async function createPosService(data: CreatePosDTO) {
       }
     }
   }
+
+  // Criar o novo POS
   const pos = await prisma.pos.create({
     data: {
       id_reference,
@@ -37,9 +50,11 @@ export async function createPosService(data: CreatePosDTO) {
     },
   });
 
-  const redisKeys = await redis.keys('pos:*');
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+  // Limpar o cache relacionado a POS
+  try {
+    await deleteKeysByPattern('pos:*');
+  } catch (error) {
+    console.warn('Erro ao limpar cache Redis:', error);
   }
 
   return pos.id;
