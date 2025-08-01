@@ -28,7 +28,7 @@ export const createAgentSchema = z.object({
   pos_id: z.uuid().optional(),
   terminal_id: z.uuid().optional(),
 
-  user: currentUser,
+  // user: currentUser,
 });
 
 export type CreateAgentDTO = z.infer<typeof createAgentSchema>;

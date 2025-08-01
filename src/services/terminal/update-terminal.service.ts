@@ -83,19 +83,19 @@ export async function editTerminalService(data: EditTerminalDTO) {
     },
   });
 
-  await prisma.auditLog.create({
-    data: {
-      entity_id: data.id,
-      action: 'update',
-      entity: 'terminal',
-      metadata: {
-        old: data,
-        new: terminalUpdated,
-      },
-      user_id: data.user.id,
-      user_name: data.user.name,
-    },
-  });
+  // await prisma.auditLog.create({
+  //   data: {
+  //     entity_id: data.id,
+  //     action: 'update',
+  //     entity: 'terminal',
+  //     metadata: {
+  //       old: data,
+  //       new: terminalUpdated,
+  //     },
+  //     user_id: data.user.id,
+  //     user_name: data.user.name,
+  //   },
+  // });
 
   try {
     await deleteKeysByPattern('terminals:*');

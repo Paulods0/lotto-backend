@@ -102,6 +102,16 @@ export async function fetchManyAgentsService({
       zone: { select: { id: true, number: true } },
       city: { select: { id: true, name: true } },
       province: { select: { id: true, name: true } },
+      pos: { 
+        select:{ 
+          latitude:true, 
+          longitude:true,
+          area:true,
+          zone:true,
+          type:true,
+          subtype:true,
+        } 
+      },
     },
   });
 

@@ -17,7 +17,7 @@ export const editAgentSchema = z.object({
   pos_id: z.uuid().optional(),
   terminal_id: z.uuid().optional(),
 
-  user: currentUser,
+  // user: currentUser,
 });
 
 export type EditAgentDTO = z.infer<typeof editAgentSchema>;

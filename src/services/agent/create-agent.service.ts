@@ -47,16 +47,16 @@ export async function createAgentService(data: CreateAgentDTO) {
     },
   });
 
-  await prisma.auditLog.create({
-    data: {
-      entity: 'agent',
-      entity_id: agent.id,
-      action: 'create',
-      user_name: data.user.name,
-      user_id: data.user.id,
-      metadata: agent,
-    },
-  });
+  // await prisma.auditLog.create({
+  //   data: {
+  //     entity: 'agent',
+  //     entity_id: agent.id,
+  //     action: 'create',
+  //     user_name: data.user.name,
+  //     user_id: data.user.id,
+  //     metadata: agent,
+  //   },
+  // });
 
   try {
     await deleteKeysByPattern('agents:*');

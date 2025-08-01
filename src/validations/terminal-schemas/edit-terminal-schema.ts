@@ -10,7 +10,6 @@ export const editTerminalSchema = z.object({
   puk: z.coerce.number().int().optional(),
   status: z.boolean().optional(),
   agent_id: z.uuid().optional(),
-  user: currentUser,
 });
 
 export type EditTerminalDTO = z.infer<typeof editTerminalSchema>;

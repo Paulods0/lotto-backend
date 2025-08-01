@@ -13,7 +13,7 @@ const terminalRouter = Router();
 terminalRouter.post('/', catchErrors(createTerminalController));
 terminalRouter.put('/:id', catchErrors(editTerminalController));
 
-terminalRouter.delete('/bulk', catchErrors(deleteManyTerminalsController));
+// terminalRouter.delete('/bulk', catchErrors(deleteManyTerminalsController));
 terminalRouter.delete('/:id', catchErrors(deleteTerminalController));
 
 terminalRouter.get('/', catchErrors(fetchManyTerminalsController));

@@ -16,7 +16,6 @@ export async function editAgentService(data: EditAgentDTO) {
     phone_number,
     pos_id,
     terminal_id,
-    user,
   } = data;
   
   const existingAgent = await prisma.agent.findUnique({
@@ -46,7 +45,7 @@ export async function editAgentService(data: EditAgentDTO) {
     : undefined;
 
   const connectRelations = {
-    ...(pos_id && { pos: { connect: { id: pos_id } } }),
+    ...(pos_id && { pos: { connect: { id: pos?.id } } }),
     ...(pos?.type && { type: { connect: { id: pos.type.id } } }),
     ...(pos?.subtype && { subtype: { connect: { id: pos.subtype.id } } }),
     ...(pos?.area && { area: { connect: { id: pos.area.id } } }),
@@ -105,19 +104,19 @@ export async function editAgentService(data: EditAgentDTO) {
     }
   }
 
-  await prisma.auditLog.create({
-    data: {
-      entity_id: id,
-      action: 'update',
-      entity: 'agent',
-      metadata: {
-        old: data,
-        new: updatedAgent,
-      },
-      user_id: user.id,
-      user_name: user.name,
-    },
-  });
+  // await prisma.auditLog.create({
+  //   data: {
+  //     entity_id: id,
+  //     action: 'update',
+  //     entity: 'agent',
+  //     metadata: {
+  //       old: data,
+  //       new: updatedAgent,
+  //     },
+  //     user_id: user.id,
+  //     user_name: user.name,
+  //   },
+  // });
 
   try {
     await deleteKeysByPattern('agents:*');
