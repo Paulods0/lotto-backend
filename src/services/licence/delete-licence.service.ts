@@ -1,7 +1,7 @@
-import redis from '../../lib/redis';
 import isUUID from '../../lib/uuid';
 import prisma from '../../lib/prisma';
 import { BadRequestError, NotFoundError } from '../../errors';
+import deleteKeysByPattern from '../../utils/redis';
 
 export async function deleteLicenceService(id: string) {
   if (!isUUID(id)) throw new BadRequestError('ID inválido.');
@@ -12,8 +12,9 @@ export async function deleteLicenceService(id: string) {
 
   await prisma.licence.delete({ where: { id } });
 
-  const redisKeys = await redis.keys('licences:*');
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+  try {
+    await deleteKeysByPattern('licences:*');
+  } catch (error) {
+    console.warn('Erro ao limpar o redis ', error);
   }
 }

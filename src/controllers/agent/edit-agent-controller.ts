@@ -5,8 +5,8 @@ import { editAgentSchema } from '../../validations/agent-schemas/edit-agent-sche
 
 export async function editAgentController(req: Request, res: Response) {
   const { id } = idSchema.parse(req.params);
-
-  const body = editAgentSchema.parse({ ...req.body, id });
+  const user = req.user;
+  const body = editAgentSchema.parse({ ...req.body, id, user });
 
   const response = await editAgentService(body);
 

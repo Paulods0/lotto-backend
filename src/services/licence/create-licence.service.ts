@@ -1,5 +1,5 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
+import deleteKeysByPattern from '../../utils/redis';
 import { CreateLicenceDTO } from '../../validations/licence-schemas/create-licence-schema';
 
 export async function createLicenceService(data: CreateLicenceDTO) {
@@ -22,10 +22,10 @@ export async function createLicenceService(data: CreateLicenceDTO) {
       ...(data.admin_id && { admin: { connect: { id: data.admin_id } } }),
     },
   });
-
-  const redisKeys = await redis.keys('licences:*');
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+  try {
+    await deleteKeysByPattern('licences:*');
+  } catch (error) {
+    console.warn('Erro ao limpar o redis ', error);
   }
 
   return licence.id;

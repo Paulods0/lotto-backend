@@ -88,6 +88,21 @@ export async function fetchManyAgentsService({
     skip: offset,
     take: limit,
     orderBy,
+    select: {
+      id: true,
+      genre: true,
+      status: true,
+      terminal: true,
+      last_name: true,
+      first_name: true,
+      id_reference: true,
+      phone_number: true,
+      afrimoney_number: true,
+      area: { select: { id: true, name: true } },
+      zone: { select: { id: true, number: true } },
+      city: { select: { id: true, name: true } },
+      province: { select: { id: true, name: true } },
+    },
   });
 
   if (agents.length > 0) {

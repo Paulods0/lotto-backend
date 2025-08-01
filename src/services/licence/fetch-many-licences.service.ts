@@ -23,6 +23,7 @@ export async function fetchManyLicencesService({ limit = 30, page, query }: Pagi
 
     searchConditions.push({ description: { contains: query, mode: 'insensitive' } });
     searchConditions.push({ number: { contains: query, mode: 'insensitive' } });
+    searchConditions.push({ reference: { contains: query, mode: 'insensitive' } });
 
     where = { OR: searchConditions };
   }
@@ -40,7 +41,15 @@ export async function fetchManyLicencesService({ limit = 30, page, query }: Pagi
     skip: offset,
     take: DEFAULT_LIMIT,
     orderBy,
-    select: { admin: { select: { name: true, licences: true } } },
+    select: {
+      id: true,
+      number: true,
+      description: true,
+      reference: true,
+      creation_date: true,
+      created_at: true,
+      admin: { select: { name: true, licences: true } },
+    },
   });
 
   if (licences.length > 0) {

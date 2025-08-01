@@ -1,5 +1,5 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
+import deleteKeysByPattern from '../../utils/redis';
 import { BadRequestError, NotFoundError } from '../../errors';
 import { EditLicenceDTO } from '../../validations/licence-schemas/edit-licence-schema';
 
@@ -24,6 +24,7 @@ export async function updateLicenceService(data: EditLicenceDTO) {
   const description = data.description ?? licence.description;
   const creation_date = data.creation_date?.getFullYear() ?? licence.created_at.getFullYear();
   const adminName = admin?.name ?? licence.admin?.name;
+
   const reference = `${adminName ?? 'unknown'}-N${number}-${creation_date}-PT${description}`.toUpperCase();
 
   await prisma.licence.update({
@@ -38,11 +39,10 @@ export async function updateLicenceService(data: EditLicenceDTO) {
     },
   });
 
-  const redisKeys = await redis.keys('licences:*');
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
-    await redis.del('admins');
+  try {
+    await deleteKeysByPattern('licences:*');
+  } catch (error) {
+    console.warn('Erro ao limpar o redis ', error);
   }
-
   return licence.id;
 }
