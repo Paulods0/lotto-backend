@@ -1,15 +1,12 @@
 import type { Request, Response } from 'express';
 import { idSchema } from '../../validations/@common/id.schema';
-import { editTerminalService } from '../../services/terminal/edit-terminal.service';
+import { editTerminalService } from '../../services/terminal/update-terminal.service';
 import { editTerminalSchema } from '../../validations/terminal-schemas/edit-terminal-schema';
 
 export async function editTerminalController(req: Request, res: Response) {
-  const { id } = idSchema.parse(req.params);
   const user = req.user;
-
-  console.log(user);
-  console.log({ ...req.body, id, user });
-
+  
+  const { id } = idSchema.parse(req.params);
   const body = editTerminalSchema.parse({ ...req.body, id, user });
 
   const response = await editTerminalService(body);

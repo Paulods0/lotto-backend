@@ -1,7 +1,7 @@
 import prisma from '../../lib/prisma';
 import deleteKeysByPattern from '../../utils/redis';
 import { BadRequestError, NotFoundError } from '../../errors';
-import { EditLicenceDTO } from '../../validations/licence-schemas/edit-licence-schema';
+import { EditLicenceDTO } from '../../validations/licence-schemas/update-licence-schema';
 
 export async function updateLicenceService(data: EditLicenceDTO) {
   if (!data.id) throw new BadRequestError('ID da licença não fornecido.');
@@ -27,7 +27,7 @@ export async function updateLicenceService(data: EditLicenceDTO) {
 
   const reference = `${adminName ?? 'unknown'}-N${number}-${creation_date}-PT${description}`.toUpperCase();
 
-  await prisma.licence.update({
+  const updatedLicence = await prisma.licence.update({
     where: { id: data.id },
     data: {
       reference,
@@ -38,6 +38,20 @@ export async function updateLicenceService(data: EditLicenceDTO) {
       ...(data.admin_id && { admin: { connect: { id: data.admin_id } } }),
     },
   });
+
+  await prisma.auditLog.create({
+    data:{
+      action:"update",
+      entity:"licence",
+      user_name:data.user.name,
+      user_id:data.user.id,
+      entity_id:data.id,
+      metadata:{
+        old:data,
+        new:updatedLicence
+      }
+    }
+  })
 
   try {
     await deleteKeysByPattern('licences:*');

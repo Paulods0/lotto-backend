@@ -1,5 +1,4 @@
 import z from 'zod';
-import { currentUser } from '../agent-schemas/create-agent-schema';
 
 export const createLicenceSchema = z.object({
   number: z.string(),

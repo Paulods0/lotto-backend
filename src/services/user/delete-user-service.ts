@@ -1,6 +1,6 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
+import deleteKeysByPattern from '../../utils/redis';
 
 export async function deleteUserService(id: string) {
   const existingUser = await prisma.user.findUnique({ where: { id } });
@@ -11,10 +11,11 @@ export async function deleteUserService(id: string) {
   await prisma.user.delete({
     where: { id },
   });
+  
 
-  const redisKeys = await redis.keys('users:*');
-
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+ try {
+    await deleteKeysByPattern('users:*');
+  } catch (error) {
+      console.warn('Erro ao limpar o redis', error)
   }
 }

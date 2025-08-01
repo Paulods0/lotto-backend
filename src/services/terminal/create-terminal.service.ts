@@ -62,9 +62,7 @@ export async function createTerminalService(data: CreateTerminalDTO) {
       entity_id: terminal.id,
       action: 'create',
       entity: 'terminal',
-      metadata: {
-        data: terminal,
-      },
+      metadata: terminal,
       user_id: data.user.id,
       user_name: data.user.name,
     },
@@ -73,6 +71,9 @@ export async function createTerminalService(data: CreateTerminalDTO) {
   // Limpar cache Redis
   try {
     await deleteKeysByPattern('terminals:*');
+    if(data.agent_id){
+      await deleteKeysByPattern('agents:*');
+    }
   } catch (error) {
     console.warn('Erro ao limpar cache Redis:', error);
   }

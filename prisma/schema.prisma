@@ -22,7 +22,7 @@ model User {
 
 model Agent {
   id               String      @id @default(uuid())
-  id_reference     Int?
+  id_reference     Int?        @unique
   first_name       String
   last_name        String
   genre            Genre
@@ -44,15 +44,16 @@ model Agent {
   subtype          Subtype?    @relation(fields: [subtype_id], references: [id])
   type             Type?       @relation(fields: [type_id], references: [id])
   zone             Zone?       @relation(fields: [zone_id], references: [id])
-  pos              Pos?
-  terminal         Terminal?
+
+  terminal Terminal?
+  pos      Pos?
 
   @@map("agents")
 }
 
 model Terminal {
   id           String    @id @default(uuid())
-  id_reference Int?
+  id_reference Int?      @unique
   serial       String
   pin          Int?
   puk          Int?
@@ -102,19 +103,19 @@ model Pos {
 }
 
 model Licence {
-  id            String          @id @default(uuid())
+  id            String    @id @default(uuid())
   number        String
   description   String
-  creation_date DateTime?       @default(now())
+  creation_date DateTime? @default(now())
   file          String?
-  created_at    DateTime        @default(now())
+  created_at    DateTime  @default(now())
   latitude      Float?
   longitude     Float?
   reference     String
   admin_id      Int?
-  
-  admin         Administration? @relation(fields: [admin_id], references: [id])
-  pos           Pos?
+
+  admin Administration? @relation(fields: [admin_id], references: [id])
+  pos   Pos?
 
   @@map("licences")
 }

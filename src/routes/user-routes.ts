@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { getUserController } from '../controllers/user/get-user-controller';
-import { editUserController } from '../controllers/user/edit-user-controller';
+import { editUserController } from '../controllers/user/update-user-controller';
 import { createUserController } from '../controllers/user/create-user-controller';
 import { deleteUserController } from '../controllers/user/delete-user-controller';
 import { fetchManyUsersController } from '../controllers/user/fetch-many-users-controller';

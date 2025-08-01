@@ -99,6 +99,9 @@ export async function editTerminalService(data: EditTerminalDTO) {
 
   try {
     await deleteKeysByPattern('terminals:*');
+    if(data.agent_id){
+      await deleteKeysByPattern('agents:*');
+    }
   } catch (error) {
     console.warn(`[Redis] Falha ao limpar o cache para padrão "terminals:*":`, error);
   }

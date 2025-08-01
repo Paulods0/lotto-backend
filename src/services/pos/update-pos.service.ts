@@ -1,7 +1,8 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { EditPosDTO } from '../../validations/pos-schemas/edit-pos-schema';
 import deleteKeysByPattern from '../../utils/redis';
+import { EditPosDTO } from '../../validations/pos-schemas/edit-pos-schema';
+import { connect } from 'http2';
 
 export async function editPosService(data: EditPosDTO) {
   const pos = await prisma.pos.findUnique({ where: { id: data.id } });
@@ -45,6 +46,7 @@ export async function editPosService(data: EditPosDTO) {
       agent: agentUpdate,
       ...(data.licence_id && { licence: { connect: { id: data.licence_id } } }),
       ...(data.type_id && { type: { connect: { id: data.type_id } } }),
+      subtype:data.subtype_id ? { connect:{ id:data.subtype_id }} : { disconnect:true },
       ...(data.area_id && { area: { connect: { id: data.area_id } } }),
       ...(data.zone_id && { zone: { connect: { id: data.zone_id } } }),
       ...(data.city_id && { city: { connect: { id: data.city_id } } }),
@@ -69,6 +71,9 @@ export async function editPosService(data: EditPosDTO) {
   // Limpa cache Redis relacionada a POS
   try {
     await deleteKeysByPattern('pos:*');
+    if(data.agent_id){
+      await deleteKeysByPattern('agents:*');
+    }
   } catch (error) {
     console.warn(`[Redis] Falha ao limpar o cache para padrão "pos:*":`, error);
   }

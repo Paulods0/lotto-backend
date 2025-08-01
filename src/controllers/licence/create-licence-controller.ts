@@ -4,6 +4,7 @@ import { createLicenceSchema } from '../../validations/licence-schemas/create-li
 
 export async function createLicenceController(req: Request, res: Response) {
   const user = req.user;
+  
   const body = createLicenceSchema.parse({ ...req.body, user });
   const response = await createLicenceService(body);
 

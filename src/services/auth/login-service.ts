@@ -4,6 +4,7 @@ import env from '../../constants/env';
 import prisma from '../../lib/prisma';
 import { BadRequestError } from '../../errors';
 import { loginDTO } from '../../validations/auth/login-schema';
+import { AuthPayload } from '../../@types/auth-payload';
 
 export async function loginService(data: loginDTO) {
   const existingUser = await prisma.user.findUnique({
@@ -18,7 +19,7 @@ export async function loginService(data: loginDTO) {
     throw new BadRequestError('Credenciais inválidas.');
   }
 
-  const user = {
+  const user:AuthPayload = {
     name: `${existingUser.first_name} ${existingUser.last_name}`,
     id: existingUser.id,
     email: existingUser.email,

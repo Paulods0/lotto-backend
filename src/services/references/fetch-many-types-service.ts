@@ -12,7 +12,7 @@ export async function fetchManyTypesService (){
             select:{ 
                 id:true,
                 name:true,
-                subtypes: { select: { id:true, name:true } } }
+                subtypes: { select: { id:true, name:true, type_id:true } } }
         })
 
         if(types.length > 0){

@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import catchErrors from '../utils/catch-errors';
 import { getPosController } from '../controllers/pos/get-pos-controller';
-import { editPosController } from '../controllers/pos/edit-pos-controller';
+import { editPosController } from '../controllers/pos/update-pos-controller';
 import { deletePosController } from '../controllers/pos/delete-pos-controller';
 import { createPosController } from '../controllers/pos/create-pos-controller';
 import { fetchManyPosController } from '../controllers/pos/fetch-many-pos-controller';

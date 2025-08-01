@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { getTerminalController } from '../controllers/terminal/get-terminal-controller';
-import { editTerminalController } from '../controllers/terminal/edit-terminal-controller';
+import { editTerminalController } from '../controllers/terminal/update-terminal-controller';
 import { createTerminalController } from '../controllers/terminal/create-terminal-controller';
 import { deleteTerminalController } from '../controllers/terminal/delete-terminal-controller';
 import { fetchManyTerminalsController } from '../controllers/terminal/fetch-many-terminals-controller';

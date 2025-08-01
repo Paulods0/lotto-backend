@@ -1,5 +1,6 @@
 import z from "zod";
 import { userRoleEnum } from "./create-user-schema";
+import { currentUser } from "../agent-schemas/create-agent-schema";
 
 export const editUserSchema = z.object({
     id: z.uuid().min(1, "O id é obrigatório."),
@@ -13,8 +14,7 @@ export const editUserSchema = z.object({
         .optional(),
     email: z
         .email("O email é obrigatório.")
-        .refine(val => !val.includes("@lotarianacional.co.ao"), { error: "O email deve pertencer à Lotaria Nacional" })
-        .min(1, "O email é obrigatório.")
+        .refine(val => val.includes("@lotarianacional.co.ao"), { error: "O email deve pertencer à Lotaria Nacional" })
         .optional(),
     password: z
         .string("O palavra-passe é obrigatória.")
@@ -22,7 +22,8 @@ export const editUserSchema = z.object({
         .optional(),
     role: userRoleEnum.optional(),
 
-    reset_password_token: z.string().optional()
+    reset_password_token: z.string().optional(),
+    user:currentUser
 })
 
 export type UserRole = z.infer<typeof userRoleEnum>

@@ -5,6 +5,9 @@ import { createAgentSchema } from '../../validations/agent-schemas/create-agent-
 
 export async function createAgentController(req: Request, res: Response) {
   const user = req.user;
+  
+  console.log(user);
+  
   const body = createAgentSchema.parse({ ...req.body, user });
 
   const response = await createAgentService(body);

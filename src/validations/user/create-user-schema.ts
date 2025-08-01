@@ -1,4 +1,5 @@
 import z from "zod";
+import { currentUser } from "../agent-schemas/create-agent-schema";
 
 export const userRoleEnum = z.enum(
     ["dev", "super_admin", "area_manager", "supervisor"],
@@ -21,7 +22,9 @@ export const createUserSchema = z.object({
         .min(6, "A palavra-passe deve ter no mínimo 6 dígitos/caractéres"),
     role: userRoleEnum,
 
-    reset_password_token: z.string().optional()
+    reset_password_token: z.string().optional(),
+    user:currentUser
+
 })
 
 export type UserRole = z.infer<typeof userRoleEnum>

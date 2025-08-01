@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUser } from '../agent-schemas/create-agent-schema';
 
 export const editLicenceSchema = z.object({
   id: z.uuid(),
@@ -9,6 +10,7 @@ export const editLicenceSchema = z.object({
   file: z.string().optional().nullable(),
   creation_date: z.coerce.date().optional(),
   admin_id: z.coerce.number().optional(),
+  user: currentUser,
 });
 
 export type EditLicenceDTO = z.infer<typeof editLicenceSchema>;

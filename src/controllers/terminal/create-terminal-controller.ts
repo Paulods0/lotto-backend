@@ -3,8 +3,9 @@ import { createTerminalService } from "../../services/terminal/create-terminal.s
 import { createTerminalSchema } from "../../validations/terminal-schemas/create-terminal-schema"
 
 export async function createTerminalController(req: Request, res: Response) {
-
-    const body = createTerminalSchema.parse(req.body)
+    const user = req.user
+    
+    const body = createTerminalSchema.parse({...req.body, user})
     const response = await createTerminalService(body)
 
     return res.status(201).json({

@@ -60,6 +60,12 @@ export async function createAgentService(data: CreateAgentDTO) {
 
   try {
     await deleteKeysByPattern('agents:*');
+    if(data.terminal_id){
+      await deleteKeysByPattern('terminals:*');
+    }
+    if(data.pos_id){
+      await deleteKeysByPattern('pos:*');
+    }
   } catch (err) {
     console.warn('Erro ao limpar cache de agentes no Redis:', err);
   }

@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { HttpStatus } from '../../constants/http';
+import redis from '../../lib/redis';
 
 export async function logoutController(req: Request, res: Response) {
   const authHeader = req.headers.authorization;
@@ -12,5 +13,11 @@ export async function logoutController(req: Request, res: Response) {
 
   if (!token) return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Token não fornecido.' });
   res.clearCookie('refreshToken');
+  
+  const cached = await redis.get('profile')
+  if(cached) {
+    await redis.del('profile')
+  }
+  
   return res.status(HttpStatus.OK).json({ message: 'Logout realizado com sucesso.' });
 }

@@ -40,6 +40,7 @@ export async function createPosService(data: CreatePosDTO) {
       latitude: data.latitude,
       longitude: data.longitude,
       ...(data.type_id && { type: { connect: { id: data.type_id } } }),
+      ...(data.subtype_id && { subtype: { connect: { id: data.subtype_id } } }),
       ...(data.area_id && { area: { connect: { id: data.area_id } } }),
       ...(data.zone_id && { zone: { connect: { id: data.zone_id } } }),
       ...(data.city_id && { city: { connect: { id: data.city_id } } }),
@@ -66,6 +67,9 @@ export async function createPosService(data: CreatePosDTO) {
   // Limpar o cache relacionado a POS
   try {
     await deleteKeysByPattern('pos:*');
+    if(data.agent_id){
+      await deleteKeysByPattern('agents:*');
+    }
   } catch (error) {
     console.warn('Erro ao limpar cache Redis:', error);
   }

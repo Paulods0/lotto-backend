@@ -3,6 +3,7 @@ import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { ConflictError } from '../../errors';
 import { CreateUserDTO } from '../../validations/user/create-user-schema';
+import deleteKeysByPattern from '../../utils/redis';
 
 export async function createUserService(data: CreateUserDTO) {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
@@ -24,10 +25,21 @@ export async function createUserService(data: CreateUserDTO) {
     },
   });
 
-  const redisKeys = await redis.keys('users:*');
+    await prisma.auditLog.create({
+    data: {
+      entity_id: user.id,
+      action: 'create',
+      entity: 'user',
+      metadata: user,
+      user_id: data.user.id,
+      user_name: data.user.name,
+    },
+  });
 
-  if (redisKeys.length > 0) {
-    await redis.del(...redisKeys);
+ try {
+    await deleteKeysByPattern('users:*');
+  } catch (error) {
+      console.warn('Erro ao limpar o redis', error)
   }
 
   return user.id;

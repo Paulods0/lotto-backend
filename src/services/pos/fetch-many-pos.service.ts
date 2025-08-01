@@ -31,6 +31,7 @@ export async function fetchManyPosService({
     latitude: true,
     longitude: true,
     type: true,
+    subtype: true,
     admin: true,
     province: true,
     area: true,

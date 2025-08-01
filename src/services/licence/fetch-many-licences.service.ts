@@ -48,10 +48,10 @@ export async function fetchManyLicencesService({ limit = 30, page, query }: Pagi
       reference: true,
       creation_date: true,
       created_at: true,
-      admin: { select: { name: true, licences: true } },
+      admin: { select: { id:true, name: true } },
     },
   });
-
+  
   if (licences.length > 0) {
     await redis.set(cacheKey, JSON.stringify(licences), 'EX', exptime);
   }
