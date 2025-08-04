@@ -2,8 +2,9 @@ import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
 import { RedisKeys } from '../../utils/cache-keys/keys';
-import { UpdateTerminalDTO } from '../../validations/terminal-schemas/update-terminal-schema';
 import { connectOrDisconnect } from '../../utils/connect-disconnect';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
+import { UpdateTerminalDTO } from '../../validations/terminal-schemas/update-terminal-schema';
 
 export async function updateTerminalService(data: UpdateTerminalDTO) {
   return await prisma
@@ -46,7 +47,7 @@ export async function updateTerminalService(data: UpdateTerminalDTO) {
         });
       }
 
-      const updated = await tx.terminal.update({
+      const { id, created_at, ...updated } = await tx.terminal.update({
         where: { id: data.id },
         data: {
           status,
@@ -63,6 +64,15 @@ export async function updateTerminalService(data: UpdateTerminalDTO) {
         },
       });
 
+      await createAuditLogService(tx, {
+        action: 'UPDATE',
+        entity: 'TERMINAL',
+        user_name: data.user.name,
+        entity_id: data.id,
+        user_id: data.user.id,
+        metadata: updated,
+      });
+
       return updated;
     })
     .then(async terminal => {
@@ -70,6 +80,6 @@ export async function updateTerminalService(data: UpdateTerminalDTO) {
       if (terminal.agent_id) {
         await deleteCache(RedisKeys.agents.all());
       }
-      return terminal.id;
+      return data.id;
     });
 }

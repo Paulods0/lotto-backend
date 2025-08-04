@@ -5,12 +5,9 @@ import { createTerminalSchema } from '../../validations/terminal-schemas/create-
 
 export async function createTerminalController(req: Request, res: Response) {
   const user = req.user as AuthPayload;
-  if (!user) {
-    return;
-  }
-  const body = createTerminalSchema.parse(req.body);
 
-  const response = await createTerminalService(body, user);
+  const body = createTerminalSchema.parse({ ...req.body, user });
+  const response = await createTerminalService(body);
 
   return res.status(201).json({
     message: 'Terminal criado com sucesso',

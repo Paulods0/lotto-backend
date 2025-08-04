@@ -2,12 +2,11 @@ import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
 import { RedisKeys } from '../../utils/cache-keys/keys';
-import { AuthPayload } from '../../@types/auth-payload';
 import { connectIfDefined } from '../../utils/connect-disconnect';
 import { createAuditLogService } from '../audit-log/create-audit-log-service';
 import { CreateTerminalDTO } from '../../validations/terminal-schemas/create-terminal-schema';
 
-export async function createTerminalService(data: CreateTerminalDTO, user: AuthPayload) {
+export async function createTerminalService({ user, ...data }: CreateTerminalDTO) {
   return await prisma
     .$transaction(async tx => {
       let id_reference: number | null = null;

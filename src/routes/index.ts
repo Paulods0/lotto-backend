@@ -10,12 +10,12 @@ import { authenticate } from '../middleware/auth/authenticate';
 import { logoutController } from '../controllers/auth/logout-controller';
 import { refreshTokenController } from '../controllers/auth/refresh-token';
 import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from './other-routes';
+import authRouter from './auth-router';
 
 const router = Router();
 
 // Auth routers
-router.use('/auth/', loginRouter);
-router.use('/auth/', logoutController);
+router.use('/auth', authRouter);
 
 // Main routers
 router.use('/users', authenticate, userRouter);

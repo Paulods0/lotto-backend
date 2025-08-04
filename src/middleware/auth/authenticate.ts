@@ -14,7 +14,6 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   jwt.verify(token, env.JWT_ACCESS_TOKEN_SECRET, (err: JwtError, user) => {
     if (err) return res.status(HttpStatus.FORBIDDEN).json({ message: 'Acesso proibido.' });
     req.user = user as AuthPayload;
-    console.log(user);
 
     next();
   });

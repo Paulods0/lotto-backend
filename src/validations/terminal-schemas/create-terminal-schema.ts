@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUserSchema } from '../../@types/user';
 
 export const createTerminalSchema = z.object({
   id_reference: z.number().int().optional(),
@@ -9,6 +10,7 @@ export const createTerminalSchema = z.object({
   pin: z.coerce.number().int({ error: 'O pin deve ser um número inteiro' }).optional(),
   puk: z.coerce.number().int({ error: 'O puk deve ser um número inteiro' }).optional(),
   agent_id: z.uuid().optional(),
+  user: currentUserSchema,
 });
 
 export type CreateTerminalDTO = z.infer<typeof createTerminalSchema>;

@@ -2,14 +2,30 @@ import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
 import { RedisKeys } from '../../utils/cache-keys/keys';
+import { AuthPayload } from '../../@types/auth-payload';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
 
-export async function deleteTerminalService(id: string) {
-  const terminal = await prisma.terminal.findUnique({ where: { id } });
+export async function deleteTerminalService(id: string, user: AuthPayload) {
+  const existingTerminal = await prisma.terminal.findUnique({ where: { id } });
 
-  if (!terminal) throw new NotFoundError('Terminal não encontrado.');
+  if (!existingTerminal) throw new NotFoundError('Terminal não encontrado.');
 
-  await prisma.terminal.delete({ where: { id } });
+  const deletedTerminal = await prisma.$transaction(async tx => {
+    const { id: idTerminal, created_at, ...terminalDeleted } = await tx.terminal.delete({ where: { id } });
 
-  await deleteCache(RedisKeys.terminals.all());
-  await deleteCache(RedisKeys.agents.all());
+    await createAuditLogService(tx, {
+      action: 'DELETE',
+      entity: 'TERMINAL',
+      user_id: user.id,
+      user_name: user.name,
+      entity_id: id,
+      metadata: terminalDeleted as Record<string, any>, // Aqui passamos os dados deletados
+    });
+
+    return terminalDeleted;
+  });
+
+  await Promise.all([deleteCache(RedisKeys.terminals.all()), deleteCache(RedisKeys.agents.all())]);
+
+  return deletedTerminal;
 }

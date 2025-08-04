@@ -21,7 +21,12 @@ export async function refreshTokenController(req: Request, res: Response) {
     const user = decoded as JwtPayloadCustom;
 
     const accessToken = jwt.sign(
-      { id: user.id, name: `${user.first_name} ${user.last_name}`, email: user.email, role: user.role },
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
       env.JWT_ACCESS_TOKEN_SECRET,
       {
         expiresIn: '15m',

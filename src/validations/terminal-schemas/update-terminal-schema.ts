@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUserSchema } from '../../@types/user';
 
 export const updateTerminalSchema = z.object({
   id: z.uuid(),
@@ -9,6 +10,7 @@ export const updateTerminalSchema = z.object({
   puk: z.coerce.number().int({ error: 'O puk deve ser um número inteiro' }).optional(),
   status: z.boolean().optional(),
   agent_id: z.uuid().optional(),
+  user: currentUserSchema,
 });
 
 export type UpdateTerminalDTO = z.infer<typeof updateTerminalSchema>;
