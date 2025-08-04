@@ -1,10 +1,10 @@
-import { ExtendedParams } from '../../services/terminal/fetch-many-terminals.service';
+import { PaginationParams } from '../../@types/pagination-params';
 
 export const RedisKeys = {
   terminals: {
     all: () => 'terminals:*',
     byId: (id: string) => `terminals:${id}`,
-    listWithFilters: (params: ExtendedParams) => {
+    listWithFilters: (params: PaginationParams) => {
       const {
         limit,
         page,
@@ -22,7 +22,7 @@ export const RedisKeys = {
   agents: {
     all: () => 'agents:*',
     byId: (id: string) => `agents:${id}`,
-    listWithFilters: (params: ExtendedParams) => {
+    listWithFilters: (params: PaginationParams) => {
       const {
         limit,
         page,
@@ -45,10 +45,14 @@ export const RedisKeys = {
   licences: {
     all: () => 'licences:*',
     byId: (id: string) => `licences:${id}`,
-    listWithFilters: (params: ExtendedParams) => {
+    listWithFilters: (params: PaginationParams) => {
       const { limit, page, query, admin_id } = params;
       return `licences:${limit}:page:${page}:query:${query}:admin_id${admin_id}`;
     },
+  },
+  auditLogs: {
+    all: () => 'auditLogs:*',
+    byId: (id: string) => `auditLogs:${id}`,
   },
   users: {
     all: () => 'users:*',

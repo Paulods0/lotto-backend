@@ -1,21 +1,19 @@
 import prisma from '../../lib/prisma';
-import redis from '../../lib/redis';
+import { getCache, setCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 
 export async function fetchManyAuditLogsServices() {
-  const redisKey = 'audit-logs';
+  const cacheKey = RedisKeys.auditLogs.all();
 
-  const cached = await redis.get(redisKey);
-
-  if (cached) return JSON.parse(cached);
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
   const auditLogs = await prisma.auditLog.findMany({
     orderBy: { created_at: 'desc' },
   });
 
-  const extime = 24 * 60 * 60 * 1000;
-
   if (auditLogs.length > 0) {
-    await redis.set(redisKey, JSON.stringify(auditLogs), 'EX', extime);
+    await setCache(cacheKey, auditLogs);
   }
 
   return auditLogs;

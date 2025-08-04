@@ -11,6 +11,7 @@ export const paramsSchema = z.object({
   admin_id: z.coerce.number().optional(),
   zone_id: z.coerce.number().optional(),
   province_id: z.coerce.number().optional(),
+  agent_id: z.string().optional(),
   status: agentStatus.optional(),
 });
 

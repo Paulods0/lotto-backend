@@ -6,7 +6,6 @@ export async function fetchManyAgentsController(req: Request, res: Response) {
   const query = paramsSchema.parse(req.query);
 
   const response = await fetchManyAgentsService(query);
-  console.log(response);
 
   return res.status(200).json(response);
 }

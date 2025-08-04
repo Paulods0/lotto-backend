@@ -1,11 +1,13 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
-import { connectIfDefined } from '../../utils/connect-disconnect';
-import { CreateTerminalDTO } from '../../validations/terminal-schemas/create-terminal-schema';
 import { RedisKeys } from '../../utils/cache-keys/keys';
+import { AuthPayload } from '../../@types/auth-payload';
+import { connectIfDefined } from '../../utils/connect-disconnect';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
+import { CreateTerminalDTO } from '../../validations/terminal-schemas/create-terminal-schema';
 
-export async function createTerminalService(data: CreateTerminalDTO) {
+export async function createTerminalService(data: CreateTerminalDTO, user: AuthPayload) {
   return await prisma
     .$transaction(async tx => {
       let id_reference: number | null = null;
@@ -57,6 +59,15 @@ export async function createTerminalService(data: CreateTerminalDTO) {
           id: true,
           agent_id: true,
         },
+      });
+
+      await createAuditLogService(tx, {
+        action: 'CREATE',
+        entity: 'TERMINAL',
+        user_id: user.id,
+        user_name: user.name,
+        entity_id: terminal.id,
+        metadata: data,
       });
 
       return terminal;

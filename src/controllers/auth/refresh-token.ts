@@ -4,7 +4,9 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { JwtDecoded, JwtError } from '../../@types/jwt';
 
 export interface JwtPayloadCustom extends JwtPayload {
-  sub: string;
+  id: string;
+  first_name: string;
+  last_name: string;
   email: string;
   role: string;
 }
@@ -18,9 +20,13 @@ export async function refreshTokenController(req: Request, res: Response) {
     if (err || !decoded) return res.sendStatus(403);
     const user = decoded as JwtPayloadCustom;
 
-    const accessToken = jwt.sign({ sub: user.id, email: user.email, role: user.role }, env.JWT_ACCESS_TOKEN_SECRET, {
-      expiresIn: '15m',
-    });
+    const accessToken = jwt.sign(
+      { id: user.id, name: `${user.first_name} ${user.last_name}`, email: user.email, role: user.role },
+      env.JWT_ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: '15m',
+      }
+    );
 
     return res.json({ accessToken });
   });
