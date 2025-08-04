@@ -4,10 +4,7 @@ import env from '../constants/env';
 // host: "172.17.198.67",
 // password: "msftsrep0."
 
-const redis = new Redis({
-  host: env.REDIS_HOST,
-  password: env.REDIS_PASSWORD,
-});
+const redis = new Redis(env.REDIS_URL);
 
 redis.on('ready', async () => {
   console.log('✅ Conectado ao Redis com sucesso!');
