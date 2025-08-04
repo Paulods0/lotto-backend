@@ -1,12 +1,13 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 import { connectIfDefined } from '../../utils/connect-disconnect';
 import { buildReference } from '../../utils/build-licemce-reference';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
 import { CreateLicenceDTO } from '../../validations/licence-schemas/create-licence-schema';
-import { RedisKeys } from '../../utils/cache-keys/keys';
 
-export async function createLicenceService(data: CreateLicenceDTO) {
+export async function createLicenceService({ user, ...data }: CreateLicenceDTO) {
   let reference = '';
 
   if (data.admin_id) {
@@ -29,18 +30,27 @@ export async function createLicenceService(data: CreateLicenceDTO) {
     });
   }
 
-  const licence = await prisma.licence.create({
-    data: {
-      reference,
-      file: data.file,
-      number: data.number,
-      description: data.description,
-      creation_date: data.creation_date,
-      ...connectIfDefined('admin', data.admin_id),
-    },
+  await prisma.$transaction(async tx => {
+    const { id, created_at, ...licence } = await tx.licence.create({
+      data: {
+        reference,
+        file: data.file,
+        number: data.number,
+        description: data.description,
+        creation_date: data.creation_date,
+        ...connectIfDefined('admin', data.admin_id),
+      },
+    });
+
+    await createAuditLogService(tx, {
+      action: 'CREATE',
+      entity: 'LICENCE',
+      user_name: user.name,
+      metadata: licence as Record<string, any>,
+      user_id: user.id,
+      entity_id: id,
+    });
   });
 
-  await deleteCache(RedisKeys.licences.all());
-
-  return licence.id;
+  await Promise.all([await deleteCache(RedisKeys.licences.all()), await deleteCache(RedisKeys.auditLogs.all())]);
 }

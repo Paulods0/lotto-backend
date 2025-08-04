@@ -3,7 +3,7 @@ import z from 'zod';
 export const currentUserSchema = z.object({
   id: z.uuid(),
   email: z.email(),
-  name: z.email(),
+  name: z.string(),
   role: z.string(),
 });
 

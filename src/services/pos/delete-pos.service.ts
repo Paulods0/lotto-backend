@@ -2,8 +2,10 @@ import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
 import { RedisKeys } from '../../utils/cache-keys/keys';
+import { AuthPayload } from '../../@types/auth-payload';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
 
-export async function deletePosService(id: string) {
+export async function deletePosService(id: string, user: AuthPayload) {
   // Verifica se o POS existe
   const pos = await prisma.pos.findUnique({ where: { id } });
 
@@ -27,11 +29,25 @@ export async function deletePosService(id: string) {
   }
 
   // Deleta o POS
-  await prisma.pos.delete({ where: { id } });
+  await prisma.$transaction(async tx => {
+    const deletedPos = await tx.pos.delete({ where: { id } });
+
+    await createAuditLogService(tx, {
+      action: 'DELETE',
+      entity: 'POS',
+      user_name: user.name,
+      metadata: deletedPos as Record<string, any>,
+      user_id: user.id,
+      entity_id: id,
+    });
+  });
 
   // Limpa os caches
-  await deleteCache(RedisKeys.pos.all());
-  await deleteCache(RedisKeys.admins.all());
-  await deleteCache(RedisKeys.agents.all());
-  await deleteCache(RedisKeys.licences.all());
+  await Promise.all([
+    await deleteCache(RedisKeys.pos.all()),
+    await deleteCache(RedisKeys.admins.all()),
+    await deleteCache(RedisKeys.auditLogs.all()),
+    await deleteCache(RedisKeys.agents.all()),
+    await deleteCache(RedisKeys.licences.all()),
+  ]);
 }

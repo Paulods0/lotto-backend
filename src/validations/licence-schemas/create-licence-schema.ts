@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUserSchema } from '../../@types/user';
 
 export const createLicenceSchema = z.object({
   number: z.string({ error: 'O número da licença é obrigatório' }),
@@ -8,6 +9,7 @@ export const createLicenceSchema = z.object({
   file: z.string().optional(),
   creation_date: z.coerce.date().optional(),
   admin_id: z.coerce.number().optional(),
+  user: currentUserSchema,
 });
 
 export type CreateLicenceDTO = z.infer<typeof createLicenceSchema>;

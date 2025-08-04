@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUserSchema } from '../../@types/user';
 
 export const updatePosSchema = z.object({
   id: z.uuid(),
@@ -14,6 +15,7 @@ export const updatePosSchema = z.object({
   longitude: z.coerce.number().optional(),
   subtype_id: z.coerce.number().optional(),
   province_id: z.coerce.number().optional(),
+  user: currentUserSchema,
 });
 
 export type UpdatePosDTO = z.infer<typeof updatePosSchema>;

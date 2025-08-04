@@ -1,11 +1,14 @@
 import type { Request, Response } from 'express';
+import { AuthPayload } from '../../@types/auth-payload';
 import { idSchema } from '../../validations/@common/id.schema';
 import { updateLicenceService } from '../../services/licence/update-licence.service';
-import { editLicenceSchema } from '../../validations/licence-schemas/update-licence-schema';
+import { updateLicenceSchema } from '../../validations/licence-schemas/update-licence-schema';
 
-export async function editLicenceController(req: Request, res: Response) {
+export async function updateLicenceController(req: Request, res: Response) {
+  const user = req.user as AuthPayload;
+
   const { id } = idSchema.parse(req.params);
-  const body = editLicenceSchema.parse({ ...req.body, id });
+  const body = updateLicenceSchema.parse({ ...req.body, id, user });
 
   const response = await updateLicenceService(body);
 

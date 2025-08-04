@@ -73,6 +73,7 @@ export async function createTerminalService({ user, ...data }: CreateTerminalDTO
     })
     .then(async terminal => {
       await deleteCache(RedisKeys.terminals.all());
+      await deleteCache(RedisKeys.auditLogs.all());
       if (terminal.agent_id) {
         await deleteCache(RedisKeys.agents.all());
       }

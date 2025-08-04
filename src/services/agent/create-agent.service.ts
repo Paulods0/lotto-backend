@@ -3,8 +3,9 @@ import { deleteCache } from '../../utils/redis';
 import { RedisKeys } from '../../utils/cache-keys/keys';
 import { connectIfDefined, connectOrDisconnect } from '../../utils/connect-disconnect';
 import { CreateAgentDTO } from '../../validations/agent-schemas/create-agent-schema';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
 
-export async function createAgentService(data: CreateAgentDTO) {
+export async function createAgentService({ user, ...data }: CreateAgentDTO) {
   const createdAgent = await prisma.$transaction(async tx => {
     const idReference = await tx.idReference.update({
       where: { type: data.type },
@@ -85,6 +86,15 @@ export async function createAgentService(data: CreateAgentDTO) {
       });
     }
 
+    await createAuditLogService(tx, {
+      action: 'CREATE',
+      entity: 'AGENT',
+      user_name: user.name,
+      metadata: data,
+      user_id: user.id,
+      entity_id: agent.id,
+    });
+
     return agent;
   });
 
@@ -92,6 +102,7 @@ export async function createAgentService(data: CreateAgentDTO) {
     deleteCache(RedisKeys.agents.all()),
     deleteCache(RedisKeys.pos.all()),
     deleteCache(RedisKeys.terminals.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
   ]);
 
   return createdAgent.id;

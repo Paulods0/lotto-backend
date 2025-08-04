@@ -3,8 +3,9 @@ import { deleteCache } from '../../utils/redis';
 import { RedisKeys } from '../../utils/cache-keys/keys';
 import { CreatePosDTO } from '../../validations/pos-schemas/create-pos-schema';
 import { connectIfDefined } from '../../utils/connect-disconnect';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
 
-export async function createPosService(data: CreatePosDTO) {
+export async function createPosService({ user, ...data }: CreatePosDTO) {
   const result = await prisma.$transaction(async tx => {
     let id_reference: number | null = null;
 
@@ -48,10 +49,19 @@ export async function createPosService(data: CreatePosDTO) {
       },
     });
 
+    await createAuditLogService(tx, {
+      action: 'CREATE',
+      entity: 'POS',
+      user_name: user.name,
+      metadata: pos as Record<string, any>,
+      user_id: user.id,
+      entity_id: pos.id,
+    });
+
     return pos.id;
   });
 
-  await deleteCache(RedisKeys.pos.all());
+  await Promise.all([await deleteCache(RedisKeys.pos.all()), await deleteCache(RedisKeys.auditLogs.all())]);
   if (data.admin_id) await deleteCache(RedisKeys.admins.all());
   if (data.agent_id) await deleteCache(RedisKeys.agents.all());
   if (data.licence_id) await deleteCache(RedisKeys.licences.all());

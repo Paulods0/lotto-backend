@@ -1,12 +1,14 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
+import { diffObjects } from '../../utils/diff-objects';
 import { RedisKeys } from '../../utils/cache-keys/keys';
 import { connectOrDisconnect } from '../../utils/connect-disconnect';
 import { UpdatePosDTO } from '../../validations/pos-schemas/update-pos-schema';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
 
-export async function updatePosService(data: UpdatePosDTO) {
-  return await prisma.$transaction(async tx => {
+export async function updatePosService({ user, ...data }: UpdatePosDTO) {
+  await prisma.$transaction(async tx => {
     const pos = await tx.pos.findUnique({ where: { id: data.id } });
     if (!pos) throw new NotFoundError('Pos não encontrado.');
 
@@ -66,11 +68,18 @@ export async function updatePosService(data: UpdatePosDTO) {
       },
     });
 
-    await deleteCache(RedisKeys.pos.all());
-    if (data.admin_id) await deleteCache(RedisKeys.admins.all());
-    if (data.agent_id) await deleteCache(RedisKeys.agents.all());
-    if (data.licence_id) await deleteCache(RedisKeys.licences.all());
-
-    return updatedPos.id;
+    await createAuditLogService(tx, {
+      action: 'UPDATE',
+      entity: 'POS',
+      user_name: user.name,
+      changes: diffObjects(data, updatedPos),
+      user_id: user.id,
+      entity_id: data.id,
+    });
   });
+  await Promise.all([await deleteCache(RedisKeys.pos.all()), await deleteCache(RedisKeys.auditLogs.all())]);
+
+  if (data.admin_id) await deleteCache(RedisKeys.admins.all());
+  if (data.agent_id) await deleteCache(RedisKeys.agents.all());
+  if (data.licence_id) await deleteCache(RedisKeys.licences.all());
 }

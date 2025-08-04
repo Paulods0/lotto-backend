@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUserSchema } from '../../@types/user';
 
 export const agentType = z.enum(['lotaria_nacional', 'revendedor'], { error: 'O tipo é obrigatório' });
 export type AgentType = z.infer<typeof agentType>;
@@ -22,6 +23,8 @@ export const createAgentSchema = z.object({
 
   pos_id: z.uuid().optional(),
   terminal_id: z.uuid().optional(),
+
+  user: currentUserSchema,
 });
 
 export type CreateAgentDTO = z.infer<typeof createAgentSchema>;

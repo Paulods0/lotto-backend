@@ -4,14 +4,16 @@ import { deleteCache } from '../../utils/redis';
 import { RedisKeys } from '../../utils/cache-keys/keys';
 import { connectOrDisconnect } from '../../utils/connect-disconnect';
 import { UpdateAgentDTO } from '../../validations/agent-schemas/update-agent-schema';
+import { createAuditLogService } from '../audit-log/create-audit-log-service';
+import { diffObjects } from '../../utils/diff-objects';
 
-export async function updateAgentService(data: UpdateAgentDTO) {
+export async function updateAgentService({ user, ...data }: UpdateAgentDTO) {
   const agent = await prisma.agent.findUnique({ where: { id: data.id } });
   if (!agent) throw new NotFoundError('Agente não encontrado');
 
   await prisma.$transaction(async tx => {
     // Atualiza dados básicos do agente
-    await tx.agent.update({
+    const updated = await tx.agent.update({
       where: { id: data.id },
       data: {
         first_name: data.first_name,
@@ -113,6 +115,15 @@ export async function updateAgentService(data: UpdateAgentDTO) {
         },
       });
     }
+
+    await createAuditLogService(tx, {
+      action: 'UPDATE',
+      entity: 'AGENT',
+      user_name: user.name,
+      changes: diffObjects(data, updated),
+      user_id: user.id,
+      entity_id: agent.id,
+    });
   });
 
   // Limpa cache relacionado
@@ -120,6 +131,7 @@ export async function updateAgentService(data: UpdateAgentDTO) {
     deleteCache(RedisKeys.agents.all()),
     deleteCache(RedisKeys.pos.all()),
     deleteCache(RedisKeys.terminals.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
   ]);
 
   return agent.id;

@@ -1,5 +1,6 @@
 import z from 'zod';
 import { agentStatus, agentType, genre } from './create-agent-schema';
+import { currentUserSchema } from '../../@types/user';
 
 export const updateAgentSchema = z.object({
   id: z.uuid(),
@@ -16,6 +17,7 @@ export const updateAgentSchema = z.object({
 
   pos_id: z.uuid().optional(),
   terminal_id: z.uuid().optional(),
+  user: currentUserSchema,
 });
 
 export type UpdateAgentDTO = z.infer<typeof updateAgentSchema>;

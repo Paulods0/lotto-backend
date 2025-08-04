@@ -25,7 +25,11 @@ export async function deleteTerminalService(id: string, user: AuthPayload) {
     return terminalDeleted;
   });
 
-  await Promise.all([deleteCache(RedisKeys.terminals.all()), deleteCache(RedisKeys.agents.all())]);
+  await Promise.all([
+    deleteCache(RedisKeys.terminals.all()),
+    await deleteCache(RedisKeys.auditLogs.all()),
+    deleteCache(RedisKeys.agents.all()),
+  ]);
 
   return deletedTerminal;
 }
