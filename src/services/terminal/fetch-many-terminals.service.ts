@@ -4,16 +4,8 @@ import { RedisKeys } from '../../utils/cache-keys/keys';
 import { getCache, setCache } from '../../utils/redis';
 import { PaginationParams } from '../../@types/pagination-params';
 
-export interface ExtendedParams extends PaginationParams {
-  area_id?: number;
-  zone_id?: number;
-  province_id?: number;
-  city_id?: number;
-  agent_id?: string;
-}
-
-export async function fetchManyTerminalsService(params: ExtendedParams) {
-  const { limit, page, query = '', area_id, city_id, province_id, zone_id, agent_id } = params;
+export async function fetchManyTerminalsService(params: PaginationParams) {
+  const { limit, page, query = '', area_id, city_id, province_id, zone_id } = params;
 
   const cacheKey = RedisKeys.terminals.listWithFilters({
     limit,
@@ -23,7 +15,6 @@ export async function fetchManyTerminalsService(params: ExtendedParams) {
     zone_id,
     province_id,
     city_id,
-    agent_id,
   });
 
   const cached = await getCache(cacheKey);
@@ -32,12 +23,11 @@ export async function fetchManyTerminalsService(params: ExtendedParams) {
   const searchFilters = buildSearchFilters(query);
 
   const where: Prisma.TerminalWhereInput = {
-    ...(searchFilters.length ? { OR: searchFilters } : {}),
+    ...(searchFilters.length > 0 ? { OR: searchFilters } : {}),
     ...(area_id && { area_id }),
     ...(zone_id && { zone_id }),
     ...(city_id && { city_id }),
     ...(province_id && { province_id }),
-    ...(agent_id && { agent_id }),
   };
 
   const offset = (page - 1) * limit;
@@ -83,19 +73,25 @@ function buildSearchFilters(query: string): Prisma.TerminalWhereInput[] {
 
   if (!query) return filters;
 
+  const numericQuery = Number(query);
+  const isNumeric = !isNaN(numericQuery);
+
+  // Pesquisa por serial, sim_card e id_reference como string ou número
   filters.push({ serial: { contains: query, mode: 'insensitive' } });
 
-  if (query === 'true' || query === 'false') {
-    filters.push({ status: query === 'true' });
+  // Caso seja um número, adiciona correspondência exata
+  if (isNumeric) {
+    filters.push(
+      { pin: numericQuery },
+      { puk: numericQuery },
+      { sim_card: numericQuery },
+      { id_reference: numericQuery }
+    );
   }
 
-  const numericQuery = Number(query);
-
-  if (!isNaN(numericQuery)) {
-    filters.push({ pin: numericQuery });
-    filters.push({ puk: numericQuery });
-    filters.push({ sim_card: numericQuery });
-    filters.push({ id_reference: numericQuery });
+  // Filtro por status booleano
+  if (query === 'true' || query === 'false') {
+    filters.push({ status: query === 'true' });
   }
 
   return filters;

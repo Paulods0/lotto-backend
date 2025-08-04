@@ -1,74 +1,98 @@
 import prisma from '../../lib/prisma';
-import deleteKeysByPattern from '../../utils/redis';
-import { generateIdReference } from '../../utils/generate-id-reference';
+import { deleteCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
+import { connectIfDefined, connectOrDisconnect } from '../../utils/connect-disconnect';
 import { CreateAgentDTO } from '../../validations/agent-schemas/create-agent-schema';
 
 export async function createAgentService(data: CreateAgentDTO) {
-  const id_reference = await generateIdReference(data.type);
+  const createdAgent = await prisma.$transaction(async tx => {
+    const idReference = await tx.idReference.update({
+      where: { type: data.type },
+      data: {
+        counter: { increment: 1 },
+      },
+    });
 
-  const pos = data.pos_id
-    ? await prisma.pos.findUnique({
-        where: { id: data.pos_id },
-        select: {
-          id: true,
-          type: true,
-          area: true,
-          zone: true,
-          city: true,
-          subtype: true,
-          province: true,
+    const agent = await tx.agent.create({
+      data: {
+        id_reference: idReference.counter,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        agent_type: data.type,
+        genre: data.genre,
+        phone_number: data.phone_number,
+        afrimoney_number: data.afrimoney_number,
+        status: data.status,
+        bi_number: data.bi_number,
+      },
+    });
+
+    if (data.terminal_id) {
+      await tx.terminal.update({
+        where: { id: data.terminal_id },
+        data: {
+          agent_id: null,
+          id_reference: null,
+          status: false,
         },
-      })
-    : undefined;
+      });
 
-  const connectRelations = {
-    ...(data.pos_id && { pos: { connect: { id: data.pos_id } } }),
-    ...(data.terminal_id && { terminal: { connect: { id: data.terminal_id } } }),
-    ...(pos?.type && { type: { connect: { id: pos.type.id } } }),
-    ...(pos?.subtype && { subtype: { connect: { id: pos.subtype.id } } }),
-    ...(pos?.area && { area: { connect: { id: pos.area.id } } }),
-    ...(pos?.zone && { connect: { id: pos.zone.id } }),
-    ...(pos?.province && { province: { connect: { id: pos.province.id } } }),
-    ...(pos?.city && { city: { connect: { id: pos.city.id } } }),
-  };
+      await tx.terminal.update({
+        where: { id: data.terminal_id },
+        data: {
+          agent_id: agent.id,
+          id_reference: agent.id_reference,
+          status: true,
+        },
+      });
+    }
 
-  const agent = await prisma.agent.create({
-    data: {
-      id_reference,
-      agent_type: data.type,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      genre: data.genre,
-      afrimoney_number: data.afrimoney_number,
-      bi_number: data.bi_number,
-      status: data.status,
-      phone_number: data.phone_number,
-      ...connectRelations,
-    },
+    if (data.pos_id) {
+      await tx.pos.update({
+        where: { id: data.pos_id },
+        data: {
+          agent_id: null,
+          id_reference: null,
+        },
+      });
+
+      const pos = await tx.pos.update({
+        where: { id: data.pos_id },
+        data: {
+          agent_id: agent.id,
+          id_reference: agent.id_reference,
+        },
+        select: {
+          area_id: true,
+          zone_id: true,
+          city_id: true,
+          type_id: true,
+          subtype_id: true,
+          province_id: true,
+        },
+      });
+
+      await tx.agent.update({
+        where: { id: agent.id },
+        data: {
+          ...connectIfDefined('area', pos.area_id),
+          ...connectIfDefined('zone', pos.zone_id),
+          ...connectIfDefined('province', pos.province_id),
+          ...connectIfDefined('city', pos.city_id),
+          ...connectIfDefined('type', pos.type_id),
+          ...connectIfDefined('subtype', pos.subtype_id),
+        },
+      });
+    }
+
+    return agent;
   });
 
-  // await prisma.auditLog.create({
-  //   data: {
-  //     entity: 'agent',
-  //     entity_id: agent.id,
-  //     action: 'create',
-  //     user_name: data.user.name,
-  //     user_id: data.user.id,
-  //     metadata: agent,
-  //   },
-  // });
+  await Promise.all([
+    deleteCache(RedisKeys.agents.all()),
+    deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.terminals.all()),
+  ]);
 
-  try {
-    await deleteKeysByPattern('agents:*');
-    if(data.terminal_id){
-      await deleteKeysByPattern('terminals:*');
-    }
-    if(data.pos_id){
-      await deleteKeysByPattern('pos:*');
-    }
-  } catch (err) {
-    console.warn('Erro ao limpar cache de agentes no Redis:', err);
-  }
-
-  return agent;
+  return createdAgent.id;
 }

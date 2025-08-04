@@ -1,31 +1,23 @@
-import z from "zod";
-import { currentUser } from "../agent-schemas/create-agent-schema";
+import z from 'zod';
 
-export const userRoleEnum = z.enum(
-    ["dev", "super_admin", "area_manager", "supervisor"],
-    { error: "A role é obrigatória" }
-)
+export const userRoleEnum = z.enum(['dev', 'super_admin', 'area_manager', 'supervisor'], {
+  error: 'A role é obrigatória',
+});
 
 export const createUserSchema = z.object({
-    first_name: z
-        .string("O nome é obrigatório.")
-        .min(2, "O nome deve ter no mínimo 2 caractéres."),
-    last_name: z
-        .string("O sobrenome é obrigatório.")
-        .min(2, "O sobrenome deve conter no mínimo 2 caractéres."),
-    email: z
-        .email("O email é obrigatório.")
-        .refine(val => val.includes("@lotarianacional.co.ao"), { error: "O email deve pertencer à Lotaria Nacional" })
-        .min(2, "O email é obrigatório."),
-    password: z
-        .string("O palavra-passe é obrigatória.")
-        .min(6, "A palavra-passe deve ter no mínimo 6 dígitos/caractéres"),
-    role: userRoleEnum,
+  first_name: z.string('O nome é obrigatório.').min(2, 'O nome deve ter no mínimo 2 caractéres.'),
+  last_name: z.string('O sobrenome é obrigatório.').min(2, 'O sobrenome deve conter no mínimo 2 caractéres.'),
+  email: z
+    .email('O email é obrigatório.')
+    .refine(val => val.includes('@lotarianacional.co.ao'), { error: 'O email deve pertencer à Lotaria Nacional' })
+    .min(2, 'O email é obrigatório.'),
+  password: z
+    .string('O palavra-passe é obrigatória.')
+    .min(6, 'A palavra-passe deve ter no mínimo 6 dígitos/caractéres'),
+  role: userRoleEnum,
 
-    reset_password_token: z.string().optional(),
-    user:currentUser
+  reset_password_token: z.string().optional(),
+});
 
-})
-
-export type UserRole = z.infer<typeof userRoleEnum>
-export type CreateUserDTO = z.infer<typeof createUserSchema>
+export type UserRole = z.infer<typeof userRoleEnum>;
+export type CreateUserDTO = z.infer<typeof createUserSchema>;

@@ -1,6 +1,6 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { getCache, setCache } from '../../utils/redis';
 import { PaginationParams } from '../../@types/pagination-params';
 
 export async function fetchManyPosService({
@@ -19,8 +19,6 @@ export async function fetchManyPosService({
   zone_id?: number;
   province_id?: number;
 }) {
-  const exptime = 60 * 5; // 5 minutos
-
   const DEFAULT_LIMIT = limit;
   const DEFAULT_PAGE = page;
   const DEFAULT_QUERY = query?.trim() || 'none';
@@ -37,6 +35,7 @@ export async function fetchManyPosService({
     area: true,
     zone: true,
     city: true,
+    licence: true,
     agent: {
       select: {
         id: true,
@@ -47,7 +46,6 @@ export async function fetchManyPosService({
     },
   };
 
-  // Construir filtro "where"
   const where: Prisma.PosWhereInput = {
     ...(type_id && { type_id }),
     ...(city_id && { city_id }),
@@ -56,7 +54,6 @@ export async function fetchManyPosService({
     ...(province_id && { province_id }),
   };
 
-  // Aplicar busca por texto (exemplo: id_reference numérico)
   if (query) {
     const numericQuery = Number(query);
     const searchConditions: Prisma.PosWhereInput[] = [];
@@ -70,7 +67,6 @@ export async function fetchManyPosService({
     }
   }
 
-  // Criar chave de cache com base em todos os filtros
   const cacheKey = [
     'pos',
     `limit:${DEFAULT_LIMIT}`,
@@ -85,8 +81,8 @@ export async function fetchManyPosService({
     .filter(Boolean)
     .join(':');
 
-  const cached = await redis.get(cacheKey);
-  if (cached) return JSON.parse(cached);
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
   const orderBy: Prisma.PosOrderByWithRelationInput = { created_at: 'asc' };
 
@@ -101,7 +97,7 @@ export async function fetchManyPosService({
   });
 
   if (pos.length > 0) {
-    await redis.set(cacheKey, JSON.stringify(pos), 'EX', exptime);
+    await setCache(cacheKey, pos);
   }
 
   return pos;

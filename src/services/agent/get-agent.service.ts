@@ -1,18 +1,12 @@
-import isUUID from '../../lib/uuid';
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
-import { BadRequestError, InternalServerError, NotFoundError } from '../../errors';
+import { NotFoundError } from '../../errors';
+import { getCache, setCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 
 export async function getAgentService(id: string) {
-  if (!isUUID(id)) throw new BadRequestError('ID inválido.');
-
-  const cacheKey = `agent:${id}`;
-  const cached = await redis.get(cacheKey);
-
-  if (cached) {
-    console.log('Cache hit');
-    return JSON.parse(cached);
-  }
+  const cacheKey = RedisKeys.agents.byId(id);
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
   const agent = await prisma.agent.findUnique({
     where: { id },
@@ -20,10 +14,7 @@ export async function getAgentService(id: string) {
 
   if (!agent) throw new NotFoundError('Agente não encontrado.');
 
-  const exttime = 60 * 5;
-
-  await redis.set(cacheKey, JSON.stringify(agent), 'EX', exttime);
-  console.log(cacheKey);
+  await setCache(cacheKey, agent);
 
   return agent;
 }

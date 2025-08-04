@@ -1,93 +1,46 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { getCache, setCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 import { PaginationParams } from '../../@types/pagination-params';
-import { AgentStatus } from '../../validations/agent-schemas/create-agent-schema';
 
-export type AgentQueryParams = {
-  type_id?: number;
-  city_id?: number;
-  area_id?: number;
-  zone_id?: number;
-  province_id?: number;
-  status?: AgentStatus;
-};
+export async function fetchManyAgentsService(params: PaginationParams) {
+  const { limit, page, query = '', area_id, city_id, province_id, status, type_id, zone_id } = params;
 
-export async function fetchManyAgentsService({
-  limit = 30,
-  page,
-  query,
-  area_id,
-  city_id,
-  province_id,
-  status,
-  type_id,
-  zone_id,
-}: PaginationParams & AgentQueryParams) {
-  const exptime = 60 * 5;
+  const cacheKey = RedisKeys.agents.listWithFilters({
+    limit,
+    page,
+    query: query || 'none',
+    area_id,
+    city_id,
+    province_id,
+    status,
+    type_id,
+    zone_id,
+  });
 
-  const DEFAULT_LIMIT = limit ?? 30;
-  const DEFAULT_PAGE = page ?? 1;
-  const DEFAULT_QUERY = query ?? 'none';
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
-  const cacheKey = `agents:${DEFAULT_LIMIT}:page:${DEFAULT_PAGE}:query:${DEFAULT_QUERY}:type:${type_id}:area:${area_id}:zone:${zone_id}:status:${status}:city:${city_id}:province:${province_id}`;
-  const cached = await redis.get(cacheKey);
-
-  if (cached) {
-    return JSON.parse(cached);
-  }
-
-  const orderBy: Prisma.AgentOrderByWithRelationInput = { created_at: 'asc' };
-
-  const searchConditions: Prisma.AgentWhereInput[] = [];
-
-  if (query) {
-    searchConditions.push(
-      {
-        first_name: {
-          contains: query,
-          mode: 'insensitive',
-        },
-      },
-      {
-        last_name: {
-          contains: query,
-          mode: 'insensitive',
-        },
-      }
-    );
-
-    const id = Number(query);
-    if (!isNaN(id)) {
-      searchConditions.push({
-        id_reference: id,
-      });
-    }
-  }
+  let search = buildAgentsFilter(query);
 
   const where: Prisma.AgentWhereInput = {
-    ...(searchConditions.length > 0 && { OR: searchConditions }),
-    ...(type_id && { type_id }),
-    ...(area_id && { area_id }),
-    ...(zone_id && { zone_id }),
-    ...(status && { status }),
-    ...(city_id && { city_id }),
-    ...(province_id && { province_id }),
+    ...(search.length > 0 ? { OR: search } : {}),
+    ...(typeof status !== 'undefined' ? { status } : {}),
+    ...(typeof type_id !== 'undefined' ? { type_id } : {}),
+    ...(typeof city_id !== 'undefined' ? { city_id } : {}),
+    ...(typeof area_id !== 'undefined' ? { area_id } : {}),
+    ...(typeof zone_id !== 'undefined' ? { zone_id } : {}),
+    ...(typeof province_id !== 'undefined' ? { province_id } : {}),
   };
-
-  if (typeof page === 'undefined') {
-    const agents = await prisma.agent.findMany({ where, orderBy });
-    await redis.set(cacheKey, JSON.stringify(agents), 'EX', exptime);
-    return agents;
-  }
 
   const offset = (page - 1) * limit;
 
   const agents = await prisma.agent.findMany({
     where,
-    skip: offset,
     take: limit,
-    orderBy,
+    skip: offset,
+    orderBy: { created_at: 'asc' },
     select: {
       id: true,
       genre: true,
@@ -102,22 +55,45 @@ export async function fetchManyAgentsService({
       zone: { select: { id: true, number: true } },
       city: { select: { id: true, name: true } },
       province: { select: { id: true, name: true } },
-      pos: { 
-        select:{ 
-          latitude:true, 
-          longitude:true,
-          area:true,
-          zone:true,
-          type:true,
-          subtype:true,
-        } 
+      pos: {
+        select: {
+          latitude: true,
+          longitude: true,
+          area: true,
+          zone: true,
+          type: true,
+          subtype: true,
+        },
       },
     },
   });
 
   if (agents.length > 0) {
-    await redis.set(cacheKey, JSON.stringify(agents), 'EX', exptime);
+    await setCache(cacheKey, agents);
   }
 
   return agents;
+}
+
+function buildAgentsFilter(query: string | undefined) {
+  let search: Prisma.AgentWhereInput[] = [];
+
+  if (!query?.trim()) return search;
+
+  search.push(
+    { first_name: { contains: query, mode: 'insensitive' } },
+    { last_name: { contains: query, mode: 'insensitive' } },
+    { bi_number: { contains: query, mode: 'insensitive' } }
+  );
+
+  const numberValue = Number(query);
+  if (!isNaN(numberValue)) {
+    search.push(
+      { phone_number: { equals: numberValue } },
+      { afrimoney_number: { equals: numberValue } },
+      { id_reference: numberValue }
+    );
+  }
+
+  return search;
 }

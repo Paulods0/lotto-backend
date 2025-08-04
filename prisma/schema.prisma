@@ -30,7 +30,7 @@ model Agent {
   afrimoney_number Int?
   agent_type       AgentType
   bi_number        String?
-  status           AgentStatus @default(pendente)
+  status           AgentStatus @default(agendado)
   created_at       DateTime    @default(now())
   area_id          Int?
   city_id          Int?
@@ -197,16 +197,25 @@ model Subtype {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid())
-  entity     String
-  entity_id  String?
-  user_id    String?
-  user_name  String
-  action     String
-  metadata   Json
-  created_at DateTime @default(now())
+  id          String   @id @default(uuid())
+  entity      String   // Ex: 'User', 'Agent', 'Post'
+  entity_id   String?  // ID do objeto afetado
+  user_id     String?  // ID do utilizador que fez a alteração
+  user_name   String   // Nome do utilizador
+  action      AuditAction
+  changes     Json?    // Usado em updates: { field: { old: value, new: value } }
+  metadata    Json?    // Info extra: IP, userAgent, etc
+  created_at  DateTime @default(now())
 
   @@map("audit_logs")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
 }
 
 model IdReference {
@@ -214,7 +223,7 @@ model IdReference {
   counter Int       @default(autoincrement())
   type    AgentType @unique
 
-  @@map("id_referecences")
+  @@map("id_references")
 }
 
 model ResetPasswordToken {
@@ -241,7 +250,7 @@ enum Genre {
 enum AgentStatus {
   ativo
   inativo
-  pendente
+  agendado
 }
 
 enum UserRole {

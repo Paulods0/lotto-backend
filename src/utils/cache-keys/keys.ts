@@ -22,6 +22,21 @@ export const RedisKeys = {
   agents: {
     all: () => 'agents:*',
     byId: (id: string) => `agents:${id}`,
+    listWithFilters: (params: ExtendedParams) => {
+      const {
+        limit,
+        page,
+        query,
+        area_id = 'all',
+        zone_id = 'all',
+        city_id = 'all',
+        type_id = 'all',
+        status,
+        province_id = 'all',
+      } = params;
+
+      return `agents:${limit}:page:${page}:query:${query}:type:${type_id}:area:${area_id}:zone:${zone_id}:status:${status}:city:${city_id}:province:${province_id}`;
+    },
   },
   pos: {
     all: () => 'pos:*',
