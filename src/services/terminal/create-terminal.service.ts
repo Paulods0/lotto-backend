@@ -1,9 +1,9 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { deleteCache } from '../../utils/redis';
-import { RedisKeys } from '../../utils/cache-keys/keys';
 import { connectIfDefined } from '../../utils/connect-disconnect';
 import { CreateTerminalDTO } from '../../validations/terminal-schemas/create-terminal-schema';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 
 export async function createTerminalService(data: CreateTerminalDTO) {
   return await prisma

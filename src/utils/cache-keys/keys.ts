@@ -30,6 +30,10 @@ export const RedisKeys = {
   licences: {
     all: () => 'licences:*',
     byId: (id: string) => `licences:${id}`,
+    listWithFilters: (params: ExtendedParams) => {
+      const { limit, page, query, admin_id } = params;
+      return `licences:${limit}:page:${page}:query:${query}:admin_id${admin_id}`;
+    },
   },
   users: {
     all: () => 'users:*',

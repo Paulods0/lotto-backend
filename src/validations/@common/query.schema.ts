@@ -11,6 +11,7 @@ export const paramsSchema = z.object({
   type_id: z.coerce.number().optional(),
   city_id: z.coerce.number().optional(),
   area_id: z.coerce.number().optional(),
+  admin_id: z.coerce.number().optional(),
   zone_id: z.coerce.number().optional(),
   status: agentStatus.optional(),
   province_id: z.coerce.number().optional(),

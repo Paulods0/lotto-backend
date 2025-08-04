@@ -1,28 +1,21 @@
-import isUUID from '../../lib/uuid';
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
-import { BadRequestError, NotFoundError } from '../../errors';
+import { NotFoundError } from '../../errors';
+import { getCache, setCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 
 export async function getLicenceService(id: string) {
-  if (!isUUID(id)) throw new BadRequestError('ID inválido.');
+  const cacheKey = RedisKeys.licences.byId(id);
+  const cached = await getCache(cacheKey);
 
-  const cacheKey = `licences:${id}`;
-  const cached = await redis.get(cacheKey);
-
-  if (cached) {
-    return JSON.parse(cached);
-  }
+  if (cached) return cached;
 
   const licence = await prisma.licence.findUnique({
     where: { id },
   });
 
-  if (!licence) throw new NotFoundError('Licença não encontrada.');
+  if (!licence) throw new NotFoundError('Licença não encontrada');
 
-  const exttime = 60 * 5;
-
-  await redis.set(cacheKey, JSON.stringify(licence), 'EX', exttime);
-  console.log(cacheKey);
+  await setCache(cacheKey, licence);
 
   return licence;
 }

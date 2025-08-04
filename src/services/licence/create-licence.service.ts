@@ -1,32 +1,46 @@
 import prisma from '../../lib/prisma';
-import deleteKeysByPattern from '../../utils/redis';
+import { NotFoundError } from '../../errors';
+import { deleteCache } from '../../utils/redis';
+import { connectIfDefined } from '../../utils/connect-disconnect';
+import { buildReference } from '../../utils/build-licemce-reference';
 import { CreateLicenceDTO } from '../../validations/licence-schemas/create-licence-schema';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 
 export async function createLicenceService(data: CreateLicenceDTO) {
-  const admin = data.admin_id ? await prisma.administration.findUnique({ where: { id: data.admin_id } }) : undefined;
+  let reference = '';
 
-  const adminName = admin?.name ?? 'unknown';
-  const licenceNumber = data.number;
-  const licenceDescription = data.description;
-  const licenceCreatedAt = data.creation_date?.getFullYear() ?? new Date().getFullYear();
+  if (data.admin_id) {
+    const admin = await prisma.administration.findUnique({
+      where: { id: data.admin_id },
+      select: { name: true },
+    });
 
-  const licence_ref = `${adminName}-N${licenceNumber}-${licenceCreatedAt}-PT${licenceDescription}`;
+    if (!admin) throw new NotFoundError('A administração não foi encontrada');
+
+    const name = admin.name;
+    const number = data.number;
+    const year = data.creation_date?.getFullYear() ?? new Date().getFullYear();
+
+    reference = buildReference({
+      name,
+      number,
+      year,
+      desc: data.description,
+    });
+  }
 
   const licence = await prisma.licence.create({
     data: {
+      reference,
       file: data.file,
       number: data.number,
       description: data.description,
       creation_date: data.creation_date,
-      reference: licence_ref.toUpperCase(),
-      ...(data.admin_id && { admin: { connect: { id: data.admin_id } } }),
+      ...connectIfDefined('admin', data.admin_id),
     },
   });
-  try {
-    await deleteKeysByPattern('licences:*');
-  } catch (error) {
-    console.warn('Erro ao limpar o redis ', error);
-  }
+
+  await deleteCache(RedisKeys.licences.all());
 
   return licence.id;
 }

@@ -1,31 +1,27 @@
 import prisma from '../../lib/prisma';
-import deleteKeysByPattern from '../../utils/redis';
-import { BadRequestError, NotFoundError } from '../../errors';
+import { NotFoundError } from '../../errors';
+import { deleteCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
+import { buildReference } from '../../utils/build-licemce-reference';
+import { connectOrDisconnect } from '../../utils/connect-disconnect';
 import { EditLicenceDTO } from '../../validations/licence-schemas/update-licence-schema';
 
 export async function updateLicenceService(data: EditLicenceDTO) {
-  if (!data.id) throw new BadRequestError('ID da licença não fornecido.');
-
   const [licence, admin] = await Promise.all([
     prisma.licence.findUnique({
       where: { id: data.id },
       include: { admin: true },
     }),
-    data.admin_id
-      ? prisma.administration.findUnique({
-          where: { id: data.admin_id },
-        })
-      : Promise.resolve(undefined),
+    data.admin_id ? prisma.administration.findUnique({ where: { id: data.admin_id } }) : Promise.resolve(undefined),
   ]);
 
-  if (!licence) throw new NotFoundError('Licença não encontrada.');
+  if (!licence) throw new NotFoundError('Licença não encontrada');
 
   const number = data.number ?? licence.number;
-  const description = data.description ?? licence.description;
-  const creation_date = data.creation_date?.getFullYear() ?? licence.created_at.getFullYear();
-  const adminName = admin?.name ?? licence.admin?.name;
+  const year = data.creation_date?.getFullYear() ?? licence.created_at.getFullYear();
+  const name = admin?.name ?? licence.admin?.name;
 
-  const reference = `${adminName ?? 'unknown'}-N${number}-${creation_date}-PT${description}`.toUpperCase();
+  const reference = buildReference({ name, number, year, desc: data.description });
 
   const updatedLicence = await prisma.licence.update({
     where: { id: data.id },
@@ -35,28 +31,11 @@ export async function updateLicenceService(data: EditLicenceDTO) {
       description: data.description,
       creation_date: data.creation_date,
       ...(data.file && { file: data.file }),
-      ...(data.admin_id && { admin: { connect: { id: data.admin_id } } }),
+      ...connectOrDisconnect('admin', data.admin_id),
     },
   });
 
-  await prisma.auditLog.create({
-    data:{
-      action:"update",
-      entity:"licence",
-      user_name:data.user.name,
-      user_id:data.user.id,
-      entity_id:data.id,
-      metadata:{
-        old:data,
-        new:updatedLicence
-      }
-    }
-  })
+  await deleteCache(RedisKeys.licences.all());
 
-  try {
-    await deleteKeysByPattern('licences:*');
-  } catch (error) {
-    console.warn('Erro ao limpar o redis ', error);
-  }
-  return licence.id;
+  return updatedLicence.id;
 }

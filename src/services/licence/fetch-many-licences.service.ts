@@ -1,46 +1,34 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { getCache, setCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 import { PaginationParams } from '../../@types/pagination-params';
 
-export async function fetchManyLicencesService({ limit = 30, page, query }: PaginationParams) {
-  const exptime = 60 * 5;
+export async function fetchManyLicencesService({ limit, page, query = '', admin_id }: PaginationParams) {
+  const cacheKey = RedisKeys.licences.listWithFilters({
+    page,
+    limit,
+    admin_id,
+    query: query || 'none',
+  });
 
-  const DEFAULT_LIMIT = limit ?? 30;
-  const DEFAULT_PAGE = page ?? 1;
-  const DEFAULT_QUERY = query?.trim() ?? 'none';
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
-  const cacheKey = `licences:${DEFAULT_LIMIT}:page:${DEFAULT_PAGE}:query:${DEFAULT_QUERY}`;
-  const cached = await redis.get(cacheKey);
+  const searchFilters = buildSearchFilters(query);
 
-  if (cached) return JSON.parse(cached);
+  const where: Prisma.LicenceWhereInput = {
+    ...(searchFilters.length ? { OR: searchFilters } : {}),
+    ...(admin_id && { admin_id }),
+  };
 
-  const orderBy: Prisma.LicenceOrderByWithRelationInput = { created_at: 'asc' };
-  let where: Prisma.LicenceWhereInput | undefined = undefined;
-
-  if (query) {
-    const searchConditions: Prisma.LicenceWhereInput[] = [];
-
-    searchConditions.push({ description: { contains: query, mode: 'insensitive' } });
-    searchConditions.push({ number: { contains: query, mode: 'insensitive' } });
-    searchConditions.push({ reference: { contains: query, mode: 'insensitive' } });
-
-    where = { OR: searchConditions };
-  }
-
-  if (typeof page === 'undefined') {
-    const licences = await prisma.licence.findMany({ where, orderBy });
-    await redis.set(cacheKey, JSON.stringify(licences), 'EX', exptime);
-    return licences;
-  }
-
-  const offset = (DEFAULT_PAGE - 1) * limit;
+  const offset = (page - 1) * limit;
 
   const licences = await prisma.licence.findMany({
     where,
     skip: offset,
-    take: DEFAULT_LIMIT,
-    orderBy,
+    take: limit,
+    orderBy: { created_at: 'asc' },
     select: {
       id: true,
       number: true,
@@ -48,13 +36,23 @@ export async function fetchManyLicencesService({ limit = 30, page, query }: Pagi
       reference: true,
       creation_date: true,
       created_at: true,
-      admin: { select: { id:true, name: true } },
+      admin: { select: { id: true, name: true } },
     },
   });
-  
+
   if (licences.length > 0) {
-    await redis.set(cacheKey, JSON.stringify(licences), 'EX', exptime);
+    await setCache(cacheKey, licences);
   }
 
   return licences;
+}
+
+function buildSearchFilters(query: string): Prisma.LicenceWhereInput[] {
+  const filters: Prisma.LicenceWhereInput[] = [];
+
+  filters.push({ description: { contains: query, mode: 'insensitive' } });
+  filters.push({ number: { contains: query, mode: 'insensitive' } });
+  filters.push({ reference: { contains: query, mode: 'insensitive' } });
+
+  return filters;
 }
