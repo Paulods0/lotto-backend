@@ -8,7 +8,8 @@
     "p:seed": "tsx src/database/seed.ts",
     "p:generate": "prisma generate",
     "p:migrate": "prisma migrate dev",
-    "p:gen:mg": "prisma generate && prisma migrate dev"
+    "p:gen:mg": "prisma generate && prisma migrate dev",
+    "build": "tsc"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
