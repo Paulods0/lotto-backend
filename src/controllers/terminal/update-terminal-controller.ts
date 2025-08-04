@@ -1,15 +1,13 @@
 import type { Request, Response } from 'express';
 import { idSchema } from '../../validations/@common/id.schema';
-import { editTerminalService } from '../../services/terminal/update-terminal.service';
-import { editTerminalSchema } from '../../validations/terminal-schemas/edit-terminal-schema';
+import { updateTerminalService } from '../../services/terminal/update-terminal.service';
+import { updateTerminalSchema } from '../../validations/terminal-schemas/update-terminal-schema';
 
-export async function editTerminalController(req: Request, res: Response) {
-  const user = req.user;
-  
+export async function updateTerminalController(req: Request, res: Response) {
   const { id } = idSchema.parse(req.params);
-  const body = editTerminalSchema.parse({ ...req.body, id, user });
+  const body = updateTerminalSchema.parse({ ...req.body, id });
 
-  const response = await editTerminalService(body);
+  const response = await updateTerminalService(body);
 
   return res.status(200).json({
     message: 'Os dados do terminal foram atualizados com sucesso.',

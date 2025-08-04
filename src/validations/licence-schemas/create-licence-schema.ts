@@ -11,3 +11,4 @@ export const createLicenceSchema = z.object({
 });
 
 export type CreateLicenceDTO = z.infer<typeof createLicenceSchema>;
+export type LicenceEntity = z.infer<typeof createLicenceSchema> & { id: string; created_at: Date };

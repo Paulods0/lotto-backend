@@ -6,8 +6,8 @@ export const paramsSchema = z.object({
   limit: z.coerce.number().optional().default(30),
   query: z
     .string()
-    .optional()
-    .transform(val => val?.trim() || undefined),
+    .transform(val => val?.trim().toLocaleLowerCase())
+    .optional(),
   type_id: z.coerce.number().optional(),
   city_id: z.coerce.number().optional(),
   area_id: z.coerce.number().optional(),

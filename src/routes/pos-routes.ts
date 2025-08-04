@@ -6,7 +6,7 @@ import { editPosController } from '../controllers/pos/update-pos-controller';
 import { deletePosController } from '../controllers/pos/delete-pos-controller';
 import { createPosController } from '../controllers/pos/create-pos-controller';
 import { fetchManyPosController } from '../controllers/pos/fetch-many-pos-controller';
-import { fetchManyPosWithCoordinatesController } from '../controllers/pos/fetch-many-pos-with-coordinates-controller';
+import { fetchBoundedPosController } from '../controllers/pos/fetch-bounded-pos-controller';
 
 const posRouter = Router();
 
@@ -14,7 +14,7 @@ posRouter.post('/', catchErrors(createPosController));
 posRouter.put('/:id', catchErrors(editPosController));
 posRouter.delete('/:id', catchErrors(deletePosController));
 
-posRouter.get('/coordinates', catchErrors(fetchManyPosWithCoordinatesController));
+posRouter.get('/bounds', catchErrors(fetchBoundedPosController));
 posRouter.get('/', catchErrors(fetchManyPosController));
 posRouter.get('/:id', catchErrors(getPosController));
 

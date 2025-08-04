@@ -1,93 +1,52 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { RedisKeys } from '../../utils/cache-keys/keys';
+import { getCache, setCache } from '../../utils/redis';
 import { PaginationParams } from '../../@types/pagination-params';
 
-interface ExtendedParams extends PaginationParams {
+export interface ExtendedParams extends PaginationParams {
   area_id?: number;
   zone_id?: number;
   province_id?: number;
   city_id?: number;
-  agent_id?: string; // Corrigido aqui
+  agent_id?: string;
 }
 
-export async function fetchManyTerminalsService({
-  limit = 30,
-  page,
-  query,
-  area_id,
-  city_id,
-  province_id,
-  zone_id,
-  agent_id,
-}: ExtendedParams) {
-  const exptime = 60 * 5;
+export async function fetchManyTerminalsService(params: ExtendedParams) {
+  const { limit, page, query = '', area_id, city_id, province_id, zone_id, agent_id } = params;
 
-  const DEFAULT_LIMIT = limit ?? 30;
-  const DEFAULT_PAGE = page ?? 1;
-  const DEFAULT_QUERY = query?.trim() ?? 'none';
+  const cacheKey = RedisKeys.terminals.listWithFilters({
+    limit,
+    page,
+    query: query || 'none',
+    area_id,
+    zone_id,
+    province_id,
+    city_id,
+    agent_id,
+  });
 
-  const cacheKey = `terminals:${DEFAULT_LIMIT}:page:${DEFAULT_PAGE}:query:${DEFAULT_QUERY}:area:${area_id}:zone:${zone_id}:province:${province_id}:city:${city_id}:agent:${agent_id}`;
-  const cached = await redis.get(cacheKey);
-  if (cached) return JSON.parse(cached);
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
-  const orderBy: Prisma.TerminalOrderByWithRelationInput = { created_at: 'asc' };
-  const searchConditions: Prisma.TerminalWhereInput[] = [];
+  const searchFilters = buildSearchFilters(query);
 
-  if (query) {
-    searchConditions.push({ serial: { contains: query, mode: 'insensitive' } });
-
-    const lowerCaseQuery = query.toLowerCase();
-    if (lowerCaseQuery === 'true' || lowerCaseQuery === 'false') {
-      searchConditions.push({ status: lowerCaseQuery === 'true' });
-    }
-
-    const numericQuery = Number(query);
-    if (!isNaN(numericQuery)) {
-      searchConditions.push({ pin: numericQuery });
-      searchConditions.push({ puk: numericQuery });
-      searchConditions.push({ sim_card: numericQuery });
-      searchConditions.push({ id_reference: numericQuery });
-    }
-  }
-
-  let where: Prisma.TerminalWhereInput = {
-    ...(searchConditions.length > 0 ? { OR: searchConditions } : {}),
+  const where: Prisma.TerminalWhereInput = {
+    ...(searchFilters.length ? { OR: searchFilters } : {}),
+    ...(area_id && { area_id }),
+    ...(zone_id && { zone_id }),
+    ...(city_id && { city_id }),
+    ...(province_id && { province_id }),
+    ...(agent_id && { agent_id }),
   };
 
-  // Filtros diretos
-  if (area_id) where.area_id = area_id;
-  if (zone_id) where.zone_id = zone_id;
-  if (province_id) where.province_id = province_id;
-  if (city_id) where.city_id = city_id;
-
-  // Filtro herdado do agent_id, substitui os outros se for usado
-  if (agent_id) {
-    const agent = await prisma.agent.findUnique({
-      where: { id: agent_id },
-      select: {
-        area_id: true,
-        zone_id: true,
-        province_id: true,
-        city_id: true,
-      },
-    });
-
-    if (agent) {
-      where.area_id = agent.area_id ?? undefined;
-      where.zone_id = agent.zone_id ?? undefined;
-      where.province_id = agent.province_id ?? undefined;
-      where.city_id = agent.city_id ?? undefined;
-    }
-  }
-
-  const offset = (DEFAULT_PAGE - 1) * DEFAULT_LIMIT;
+  const offset = (page - 1) * limit;
 
   const terminals = await prisma.terminal.findMany({
     where,
+    take: limit,
     skip: offset,
-    take: DEFAULT_LIMIT,
-    orderBy,
+    orderBy: { created_at: 'asc' },
     select: {
       id: true,
       pin: true,
@@ -111,9 +70,33 @@ export async function fetchManyTerminalsService({
     },
   });
 
+  // Cache apenas se houver resultados
   if (terminals.length > 0) {
-    await redis.set(cacheKey, JSON.stringify(terminals), 'EX', exptime);
+    await setCache(cacheKey, terminals);
   }
 
   return terminals;
+}
+
+function buildSearchFilters(query: string): Prisma.TerminalWhereInput[] {
+  const filters: Prisma.TerminalWhereInput[] = [];
+
+  if (!query) return filters;
+
+  filters.push({ serial: { contains: query, mode: 'insensitive' } });
+
+  if (query === 'true' || query === 'false') {
+    filters.push({ status: query === 'true' });
+  }
+
+  const numericQuery = Number(query);
+
+  if (!isNaN(numericQuery)) {
+    filters.push({ pin: numericQuery });
+    filters.push({ puk: numericQuery });
+    filters.push({ sim_card: numericQuery });
+    filters.push({ id_reference: numericQuery });
+  }
+
+  return filters;
 }

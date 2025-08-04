@@ -1,82 +1,71 @@
 import prisma from '../../lib/prisma';
-import deleteKeysByPattern from '../../utils/redis';
+import { NotFoundError } from '../../errors';
+import { deleteCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
+import { connectIfDefined } from '../../utils/connect-disconnect';
 import { CreateTerminalDTO } from '../../validations/terminal-schemas/create-terminal-schema';
 
 export async function createTerminalService(data: CreateTerminalDTO) {
-  let id_reference: number | null = null;
-  let agentData = null;
+  return await prisma
+    .$transaction(async tx => {
+      let id_reference: number | null = null;
+      let area_id: number | null = null;
+      let city_id: number | null = null;
+      let province_id: number | null = null;
+      let zone_id: number | null = null;
 
-  // Buscar dados do agente se informado
-  if (data.agent_id) {
-    agentData = await prisma.agent.findUnique({
-      where: { id: data.agent_id },
-      select: {
-        id: true,
-        id_reference: true,
-        city: { select: { id: true } },
-        area: { select: { id: true } },
-        zone: { select: { id: true } },
-        province: { select: { id: true } },
-      },
-    });
+      if (data.agent_id) {
+        const agent = await tx.agent.findUnique({ where: { id: data.agent_id } });
 
-    if (!agentData?.id_reference) {
-      throw new Error('O agente não possui um id_reference válido.');
-    }
+        if (!agent) throw new NotFoundError('Agente não encontrado');
 
-    id_reference = agentData.id_reference;
+        id_reference = agent.id_reference;
+        area_id = agent.area_id ?? null;
+        city_id = agent.city_id ?? null;
+        province_id = agent.province_id ?? null;
+        zone_id = agent.zone_id ?? null;
 
-    // Desvincular terminal existente com mesmo id_reference
-    const existing = await prisma.terminal.findFirst({
-      where: { id_reference },
-      select: { id: true },
-    });
+        await tx.terminal.updateMany({
+          where: { agent_id: agent.id },
+          data: {
+            agent_id: null,
+            id_reference: null,
+            status: false,
+            area_id: null,
+            city_id: null,
+            province_id: null,
+            zone_id: null,
+          },
+        });
+      }
 
-    if (existing) {
-      await prisma.terminal.update({
-        where: { id: existing.id },
-        data: { id_reference: null },
+      const terminal = await tx.terminal.create({
+        data: {
+          id_reference,
+          pin: data.pin,
+          puk: data.puk,
+          serial: data.serial,
+          sim_card: data.sim_card,
+          status: data.agent_id ? true : false,
+          ...connectIfDefined('area', area_id),
+          ...connectIfDefined('city', city_id),
+          ...connectIfDefined('zone', zone_id),
+          ...connectIfDefined('province', province_id),
+          ...connectIfDefined('agent', data.agent_id ?? null),
+        },
+        select: {
+          id: true,
+          agent_id: true,
+        },
       });
-    }
-  }
 
-  // Criar novo terminal
-  const terminal = await prisma.terminal.create({
-    data: {
-      pin: data.pin,
-      puk: data.puk,
-      serial: data.serial,
-      sim_card: data.sim_card,
-      id_reference,
-      agent: agentData?.id ? { connect: { id: agentData.id } } : undefined,
-      city: agentData?.city?.id ? { connect: { id: agentData.city.id } } : undefined,
-      area: agentData?.area?.id ? { connect: { id: agentData.area.id } } : undefined,
-      zone: agentData?.zone?.id ? { connect: { id: agentData.zone.id } } : undefined,
-      province: agentData?.province?.id ? { connect: { id: agentData.province.id } } : undefined,
-      status: agentData ? true : undefined, // Atualiza o status para true se tiver agente
-    },
-  });
-
-  await prisma.auditLog.create({
-    data: {
-      entity_id: terminal.id,
-      action: 'create',
-      entity: 'terminal',
-      metadata: terminal,
-      user_id: data.user.id,
-      user_name: data.user.name,
-    },
-  });
-
-  // Limpar cache Redis
-  try {
-    await deleteKeysByPattern('terminals:*');
-    if(data.agent_id){
-      await deleteKeysByPattern('agents:*');
-    }
-  } catch (error) {
-    console.warn('Erro ao limpar cache Redis:', error);
-  }
-
-  return terminal.id;
+      return terminal;
+    })
+    .then(async terminal => {
+      await deleteCache(RedisKeys.terminals.all());
+      if (terminal.agent_id) {
+        await deleteCache(RedisKeys.agents.all());
+      }
+      return terminal.id;
+    });
 }

@@ -1,17 +1,13 @@
-import isUUID from '../../lib/uuid';
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
-import { BadRequestError, NotFoundError } from '../../errors';
+import { NotFoundError } from '../../errors';
+import { RedisKeys } from '../../utils/cache-keys/keys';
+import { getCache, setCache } from '../../utils/redis';
 
 export async function getTerminalService(id: string) {
-  if (!isUUID(id)) throw new BadRequestError('ID inválido.');
+  const cacheKey = RedisKeys.terminals.byId(id);
 
-  const cacheKey = `terminal:${id}`;
-  const cached = await redis.get(cacheKey);
-
-  if (cached) {
-    return JSON.parse(cached);
-  }
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
   const terminal = await prisma.terminal.findUnique({
     where: { id },
@@ -36,10 +32,7 @@ export async function getTerminalService(id: string) {
 
   if (!terminal) throw new NotFoundError('Terminal não encontrado.');
 
-  const exttime = 60 * 5;
-
-  await redis.set(cacheKey, JSON.stringify(terminal), 'EX', exttime);
-  console.log(cacheKey);
+  await setCache(cacheKey, terminal);
 
   return terminal;
 }

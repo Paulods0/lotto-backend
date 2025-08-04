@@ -1,8 +1,7 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import deleteKeysByPattern from '../../utils/redis';
-import z from 'zod';
-import { currentUser } from '../../validations/agent-schemas/create-agent-schema';
+import { deleteCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 
 export async function deleteManyTerminalService(ids: string[]) {
   const deleted = await prisma.terminal.deleteMany({
@@ -13,11 +12,8 @@ export async function deleteManyTerminalService(ids: string[]) {
     throw new NotFoundError('Nenhum terminal encontrado para remover.');
   }
 
-  try {
-    await deleteKeysByPattern('terminals:*');
-  } catch (error) {
-    console.warn('Erro ao limpar cache', error);
-  }
+  await deleteCache(RedisKeys.terminals.all());
+  await deleteCache(RedisKeys.agents.all());
 
   return deleted.count;
 }
