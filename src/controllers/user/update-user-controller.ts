@@ -4,10 +4,8 @@ import { editUserSchema } from '../../validations/user/edit-user-schema';
 import { editUserService } from '../../services/user/edit-user-service';
 
 export async function editUserController(req: Request, res: Response) {
-  const user = req.user
-
   const { id } = idSchema.parse(req.params);
-  const body = editUserSchema.parse({ ...req.body, id,user });
+  const body = editUserSchema.parse({ ...req.body, id });
 
   const response = await editUserService(body);
 
