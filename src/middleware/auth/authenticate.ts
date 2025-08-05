@@ -15,8 +15,6 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     if (err) return res.status(HttpStatus.FORBIDDEN).json({ message: 'Acesso proibido.' });
     req.user = user as AuthPayload;
 
-    console.log(user);
-
     next();
   });
 }
