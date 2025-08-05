@@ -5,6 +5,7 @@ import { deleteLicenceService } from '../../services/licence/delete-licence.serv
 
 export async function deleteLicenceController(req: Request, res: Response) {
   const { id } = idSchema.parse(req.params);
+
   const user = req.user as AuthPayload;
 
   await deleteLicenceService(id, user);

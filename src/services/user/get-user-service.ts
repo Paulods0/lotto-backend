@@ -1,24 +1,18 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
+import { getCache, setCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 
 export async function getUserService(id: string) {
-  const cacheKey = `users:${id}`;
+  const cacheKey = RedisKeys.users.byId(id);
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
   const existingUser = await prisma.user.findUnique({ where: { id } });
 
-  const cached = await redis.get(cacheKey);
+  if (!existingUser) throw new NotFoundError('Usuário não encontrado.');
 
-  if (cached) {
-    return JSON.parse(cached);
-  }
-
-  if (!existingUser) {
-    throw new NotFoundError('Usuário não encontrado.');
-  }
-
-  const exptime = 60 * 5;
-  await redis.set(cacheKey, JSON.stringify(existingUser), 'EX', exptime);
+  await setCache(cacheKey, existingUser);
 
   return existingUser;
 }

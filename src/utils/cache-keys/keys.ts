@@ -57,6 +57,10 @@ export const RedisKeys = {
   users: {
     all: () => 'users:*',
     byId: (id: string) => `users:${id}`,
+    listWithFilters: (params: PaginationParams) => {
+      const { limit, page, query } = params;
+      return `users:${limit}:page:${page}:query:${query}`;
+    },
   },
   admins: {
     all: () => 'admins:*',

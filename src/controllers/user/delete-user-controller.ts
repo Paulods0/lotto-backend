@@ -1,11 +1,14 @@
 import type { Request, Response } from 'express';
 import { idSchema } from '../../validations/@common/id.schema';
 import { deleteUserService } from '../../services/user/delete-user-service';
+import { AuthPayload } from '../../@types/auth-payload';
 
 export async function deleteUserController(req: Request, res: Response) {
+  const user = req.user as AuthPayload;
+
   const { id } = idSchema.parse(req.params);
 
-  await deleteUserService(id);
+  await deleteUserService(id, user);
 
   return res.status(200).json({
     message: 'Usuário removido com sucesso',

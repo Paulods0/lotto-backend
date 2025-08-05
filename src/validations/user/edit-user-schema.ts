@@ -1,7 +1,8 @@
 import z from 'zod';
 import { userRoleEnum } from './create-user-schema';
+import { currentUserSchema } from '../../@types/user';
 
-export const editUserSchema = z.object({
+export const updateUserSchema = z.object({
   id: z.uuid().min(1, 'O id é obrigatório.'),
   first_name: z.string('O nome é obrigatório.').min(2, 'O nome deve ter no mínimo 2 caractéres.').optional(),
   last_name: z
@@ -19,7 +20,9 @@ export const editUserSchema = z.object({
   role: userRoleEnum.optional(),
 
   reset_password_token: z.string().optional(),
+
+  user: currentUserSchema,
 });
 
 export type UserRole = z.infer<typeof userRoleEnum>;
-export type EditUserDTO = z.infer<typeof editUserSchema>;
+export type UpdateUserDTO = z.infer<typeof updateUserSchema>;

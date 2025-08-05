@@ -1,4 +1,5 @@
 import z from 'zod';
+import { currentUserSchema } from '../../@types/user';
 
 export const userRoleEnum = z.enum(['dev', 'super_admin', 'area_manager', 'supervisor'], {
   error: 'A role é obrigatória',
@@ -17,6 +18,7 @@ export const createUserSchema = z.object({
   role: userRoleEnum,
 
   reset_password_token: z.string().optional(),
+  user: currentUserSchema,
 });
 
 export type UserRole = z.infer<typeof userRoleEnum>;

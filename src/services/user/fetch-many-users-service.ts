@@ -1,60 +1,45 @@
-import redis from '../../lib/redis';
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { getCache, setCache } from '../../utils/redis';
+import { RedisKeys } from '../../utils/cache-keys/keys';
 import { PaginationParams } from '../../@types/pagination-params';
 
-export async function fetchManyUsersService({ limit = 30, page, query }: PaginationParams) {
-  const exptime = 60 * 5;
+export async function fetchManyUsersService({ limit, page, query }: PaginationParams) {
+  const cacheKey = RedisKeys.users.listWithFilters({
+    page,
+    limit,
+    query: 'none',
+  });
 
-  const DEFAULT_LIMIT = limit ?? 30;
-  const DEFAULT_PAGE = page ?? 1;
-  const DEFAULT_QUERY = query?.trim() ?? 'none';
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
 
-  const cacheKey = `users:${DEFAULT_LIMIT}:page:${DEFAULT_PAGE}:query:${DEFAULT_QUERY}`;
-  const cached = await redis.get(cacheKey);
+  const search = buildUserFilter(query);
 
-  if (cached) return JSON.parse(cached);
+  let where: Prisma.UserWhereInput | undefined = {
+    AND: [{ OR: search }, { role: { in: ['area_manager', 'dev', 'super_admin', 'supervisor'] } }],
+  };
 
-  const orderBy: Prisma.UserOrderByWithRelationInput = { created_at: 'asc' };
-  let where: Prisma.UserWhereInput | undefined = undefined;
-
-  if (query) {
-    const searchConditions: Prisma.UserWhereInput[] = [];
-
-    searchConditions.push({ first_name: { contains: query, mode: 'insensitive' } });
-    searchConditions.push({ last_name: { contains: query, mode: 'insensitive' } });
-    searchConditions.push({ email: { contains: query, mode: 'insensitive' } });
-
-    where = {
-      AND: [
-        {
-          OR: searchConditions,
-        },
-        {
-          role: { in: ['area_manager', 'dev', 'super_admin', 'supervisor'] },
-        },
-      ],
-    };
-  }
-
-  if (typeof page === 'undefined') {
-    const users = await prisma.user.findMany({ where, orderBy });
-    await redis.set(cacheKey, JSON.stringify(users), 'EX', exptime);
-    return users;
-  }
-
-  const offset = (DEFAULT_PAGE - 1) * limit;
+  const offset = (page - 1) * limit;
 
   const users = await prisma.user.findMany({
     where,
+    take: limit,
     skip: offset,
-    take: DEFAULT_LIMIT,
-    orderBy,
+    orderBy: { created_at: 'asc' },
   });
 
-  if (users.length > 0) {
-    await redis.set(cacheKey, JSON.stringify(users), 'EX', exptime);
-  }
+  if (users.length > 0) await setCache(cacheKey, users);
 
   return users;
+}
+
+function buildUserFilter(query: string | undefined) {
+  let filters: Prisma.UserWhereInput[] = [];
+  if (query) {
+    filters.push({ first_name: { contains: query, mode: 'insensitive' } });
+    filters.push({ last_name: { contains: query, mode: 'insensitive' } });
+    filters.push({ email: { contains: query, mode: 'insensitive' } });
+  }
+  return filters;
 }
