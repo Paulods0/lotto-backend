@@ -1,5 +1,5 @@
-import { oneDayFromNowInMs } from './../../utils/date';
 import type { Request, Response } from 'express';
+import { oneDayFromNowInMs } from './../../utils/date';
 import { loginService } from '../../services/auth/login-service';
 import { loginSchema } from '../../validations/auth/login-schema';
 
@@ -9,10 +9,10 @@ export async function loginController(req: Request, res: Response) {
   const { accessToken, refreshToken } = await loginService(body);
 
   res.cookie('refreshToken', refreshToken, {
-    path: '/',
+    httpOnly: true,
     secure: true,
     sameSite: 'none',
-    httpOnly: true,
+    path: '/',
     maxAge: oneDayFromNowInMs,
   });
 

@@ -15,9 +15,7 @@ export async function loginService(data: loginDTO) {
 
   const isSamePassword = await bcrypt.compare(data.password, existingUser.password);
 
-  if (!isSamePassword) {
-    throw new BadRequestError('Credenciais inválidas.');
-  }
+  if (!isSamePassword) throw new BadRequestError('Credenciais inválidas.');
 
   const user: AuthPayload = {
     name: `${existingUser.first_name} ${existingUser.last_name}`,
