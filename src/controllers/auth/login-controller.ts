@@ -10,8 +10,8 @@ export async function loginController(req: Request, res: Response) {
 
   res.cookie('refreshToken', refreshToken, {
     path: '/',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     httpOnly: true,
     maxAge: oneDayFromNowInMs,
   });

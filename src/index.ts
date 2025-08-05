@@ -9,12 +9,13 @@ import { errorHandler } from './middleware/error-handler';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = ['https://mtjogos.co.ao'];
+const allowedOrigins = ['https://mtjogos.co.ao', 'http://localhost:5173'];
 
 app.use(
   cors({
