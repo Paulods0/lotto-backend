@@ -5,7 +5,6 @@ import { createAuditLog } from '../audit-log/create.service';
 import { connectIfDefined } from '../../utils/connect-disconnect';
 import { CreatePosDTO } from '../../validations/pos/create.schema';
 import { NotFoundError } from '../../errors';
-
 export async function createPos({ user, ...data }: CreatePosDTO) {
   const result = await prisma.$transaction(async (tx) => {
     let id_reference: number | null = null;
