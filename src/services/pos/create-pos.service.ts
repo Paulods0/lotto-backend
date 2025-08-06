@@ -1,13 +1,25 @@
 import prisma from '../../lib/prisma';
-import { deleteCache } from '../../utils/redis';
-import { RedisKeys } from '../../utils/cache-keys/keys';
-import { CreatePosDTO } from '../../validations/pos-schemas/create-pos-schema';
+import { deleteCache } from '../../utils/redis/delete-cache';
+import { RedisKeys } from '../../utils/redis/keys';
+import { createAuditLog } from '../audit-log/create.service';
 import { connectIfDefined } from '../../utils/connect-disconnect';
-import { createAuditLogService } from '../audit-log/create-audit-log-service';
+import { CreatePosDTO } from '../../validations/pos/create.schema';
+import { NotFoundError } from '../../errors';
 
-export async function createPosService({ user, ...data }: CreatePosDTO) {
-  const result = await prisma.$transaction(async tx => {
+export async function createPos({ user, ...data }: CreatePosDTO) {
+  const result = await prisma.$transaction(async (tx) => {
     let id_reference: number | null = null;
+
+    if (data.licence_id) {
+      const licence = await tx.licence.findUnique({ where: { id: data.licence_id } });
+      if (!licence) throw new NotFoundError('Licença não encontrada.');
+      await tx.licence.update({
+        where: { id: licence.id },
+        data: {
+          coordinates: `${data.latitude}, ${data.longitude}`,
+        },
+      });
+    }
 
     if (data.agent_id) {
       const agent = await tx.agent.findUnique({
@@ -49,7 +61,7 @@ export async function createPosService({ user, ...data }: CreatePosDTO) {
       },
     });
 
-    await createAuditLogService(tx, {
+    await createAuditLog(tx, {
       action: 'CREATE',
       entity: 'POS',
       user_name: user.name,
@@ -62,6 +74,7 @@ export async function createPosService({ user, ...data }: CreatePosDTO) {
   });
 
   await Promise.all([await deleteCache(RedisKeys.pos.all()), await deleteCache(RedisKeys.auditLogs.all())]);
+
   if (data.admin_id) await deleteCache(RedisKeys.admins.all());
   if (data.agent_id) await deleteCache(RedisKeys.agents.all());
   if (data.licence_id) await deleteCache(RedisKeys.licences.all());

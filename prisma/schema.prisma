@@ -75,13 +75,13 @@ model Terminal {
 }
 
 model Pos {
-  id           String          @id @default(uuid())
-  id_reference Int?            @unique
+  id           String   @id @default(uuid())
+  id_reference Int?     @unique
   latitude     Float
   longitude    Float
-  agent_id     String?         @unique
-  licence_id   String?         @unique
-  created_at   DateTime        @default(now())
+  agent_id     String?  @unique
+  licence_id   String?  @unique
+  created_at   DateTime @default(now())
   admin_id     Int?
   area_id      Int?
   province_id  Int?
@@ -89,15 +89,16 @@ model Pos {
   type_id      Int?
   zone_id      Int?
   city_id      Int?
-  admin        Administration? @relation(fields: [admin_id], references: [id])
-  agent        Agent?          @relation(fields: [agent_id], references: [id])
-  area         Area?           @relation(fields: [area_id], references: [id])
-  city         City?           @relation(fields: [city_id], references: [id])
-  licence      Licence?        @relation(fields: [licence_id], references: [id])
-  province     Province?       @relation(fields: [province_id], references: [id])
-  subtype      Subtype?        @relation(fields: [subtype_id], references: [id])
-  type         Type?           @relation(fields: [type_id], references: [id])
-  zone         Zone?           @relation(fields: [zone_id], references: [id])
+
+  admin    Administration? @relation(fields: [admin_id], references: [id])
+  agent    Agent?          @relation(fields: [agent_id], references: [id])
+  area     Area?           @relation(fields: [area_id], references: [id])
+  city     City?           @relation(fields: [city_id], references: [id])
+  licence  Licence?        @relation(fields: [licence_id], references: [id])
+  province Province?       @relation(fields: [province_id], references: [id])
+  subtype  Subtype?        @relation(fields: [subtype_id], references: [id])
+  type     Type?           @relation(fields: [type_id], references: [id])
+  zone     Zone?           @relation(fields: [zone_id], references: [id])
 
   @@map("pos")
 }
@@ -106,16 +107,17 @@ model Licence {
   id            String    @id @default(uuid())
   number        String
   description   String
-  creation_date DateTime? @default(now())
   file          String?
-  created_at    DateTime  @default(now())
-  latitude      Float?
-  longitude     Float?
+  coordinates   String?
   reference     String
+  limit         Int       @default(1)
   admin_id      Int?
+  creation_date DateTime? @default(now())
+  expires_at    DateTime?
+  created_at    DateTime  @default(now())
 
   admin Administration? @relation(fields: [admin_id], references: [id])
-  pos   Pos?
+  pos   Pos[]
 
   @@map("licences")
 }
@@ -197,15 +199,15 @@ model Subtype {
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  entity      String   // Ex: 'User', 'Agent', 'Post'
-  entity_id   String?  // ID do objeto afetado
-  user_id     String?  // ID do utilizador que fez a alteração
-  user_name   String   // Nome do utilizador
-  action      AuditAction
-  changes     Json?    // Usado em updates: { field: { old: value, new: value } }
-  metadata    Json?    // Info extra: IP, userAgent, etc
-  created_at  DateTime @default(now())
+  id         String      @id @default(uuid())
+  entity     String // Ex: 'User', 'Agent', 'Post'
+  entity_id  String? // ID do objeto afetado
+  user_id    String? // ID do utilizador que fez a alteração
+  user_name  String // Nome do utilizador
+  action     AuditAction
+  changes    Json? // Usado em updates: { field: { old: value, new: value } }
+  metadata   Json? // Info extra: IP, userAgent, etc
+  created_at DateTime    @default(now())
 
   @@map("audit_logs")
 }

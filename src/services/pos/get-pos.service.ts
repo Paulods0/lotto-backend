@@ -1,9 +1,10 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { getCache, setCache } from '../../utils/redis';
-import { RedisKeys } from '../../utils/cache-keys/keys';
+import { getCache } from '../../utils/redis/get-cache';
+import { RedisKeys } from '../../utils/redis/keys';
+import { setCache } from '../../utils/redis/set-cache';
 
-export async function getPosService(id: string) {
+export async function getPos(id: string) {
   const cacheKey = RedisKeys.pos.byId(id);
   const cached = await getCache(cacheKey);
 

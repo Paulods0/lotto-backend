@@ -1,9 +1,10 @@
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
-import { getCache, setCache } from '../../utils/redis';
+import { getCache } from '../../utils/redis/get-cache';
 import { PaginationParams } from '../../@types/pagination-params';
+import { setCache } from '../../utils/redis/set-cache';
 
-export async function fetchManyPosService({
+export async function fetchManyPos({
   limit = 30,
   page = 1,
   query,

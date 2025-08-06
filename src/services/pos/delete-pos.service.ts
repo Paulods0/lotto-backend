@@ -1,11 +1,11 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { deleteCache } from '../../utils/redis';
-import { RedisKeys } from '../../utils/cache-keys/keys';
+import { deleteCache } from '../../utils/redis/delete-cache';
+import { RedisKeys } from '../../utils/redis/keys';
 import { AuthPayload } from '../../@types/auth-payload';
-import { createAuditLogService } from '../audit-log/create-audit-log-service';
+import { createAuditLog } from '../audit-log/create.service';
 
-export async function deletePosService(id: string, user: AuthPayload) {
+export async function deletePos(id: string, user: AuthPayload) {
   // Verifica se o POS existe
   const pos = await prisma.pos.findUnique({ where: { id } });
 
@@ -29,10 +29,10 @@ export async function deletePosService(id: string, user: AuthPayload) {
   }
 
   // Deleta o POS
-  await prisma.$transaction(async tx => {
+  await prisma.$transaction(async (tx) => {
     const deletedPos = await tx.pos.delete({ where: { id } });
 
-    await createAuditLogService(tx, {
+    await createAuditLog(tx, {
       action: 'DELETE',
       entity: 'POS',
       user_name: user.name,

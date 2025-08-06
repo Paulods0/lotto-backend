@@ -1,14 +1,14 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { deleteCache } from '../../utils/redis';
+import { deleteCache } from '../../utils/redis/delete-cache';
 import { diffObjects } from '../../utils/diff-objects';
-import { RedisKeys } from '../../utils/cache-keys/keys';
+import { RedisKeys } from '../../utils/redis/keys';
 import { connectOrDisconnect } from '../../utils/connect-disconnect';
-import { UpdatePosDTO } from '../../validations/pos-schemas/update-pos-schema';
-import { createAuditLogService } from '../audit-log/create-audit-log-service';
+import { UpdatePosDTO } from '../../validations/pos/update.schema';
+import { createAuditLog } from '../audit-log/create.service';
 
-export async function updatePosService({ user, ...data }: UpdatePosDTO) {
-  await prisma.$transaction(async tx => {
+export async function updatePos({ user, ...data }: UpdatePosDTO) {
+  await prisma.$transaction(async (tx) => {
     const pos = await tx.pos.findUnique({ where: { id: data.id } });
     if (!pos) throw new NotFoundError('Pos não encontrado.');
 
@@ -68,7 +68,7 @@ export async function updatePosService({ user, ...data }: UpdatePosDTO) {
       },
     });
 
-    await createAuditLogService(tx, {
+    await createAuditLog(tx, {
       action: 'UPDATE',
       entity: 'POS',
       user_name: user.name,

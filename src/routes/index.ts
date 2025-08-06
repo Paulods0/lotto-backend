@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import posRouter from './pos-routes';
-import authRouter from './auth-router';
-import userRouter from './user-routes';
-import agentRouter from './agent-routes';
-import licenceRouter from './licence-routes';
-import terminalRouter from './terminal-routes';
-import auditLogRouter from './audit-log-routes';
+import posRouter from './pos.routes';
+import authRouter from './auth.router';
+import userRouter from './user.routes';
+import agentRouter from './agent.routes';
+import licenceRouter from './licence.routes';
+import terminalRouter from './terminal.routes';
+import auditLogRouter from './audit-log.routes';
 import { authenticate } from '../middleware/auth/authenticate';
-import { refreshTokenController } from '../controllers/auth/refresh-token';
-import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from './other-routes';
+import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from './references.routes';
+import { handle as refreshTokenController } from '../controllers/auth/refresh-token.controller';
 
 const router = Router();
 

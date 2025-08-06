@@ -1,4 +1,4 @@
-import { ChangeLog } from '../validations/audit-log-schemas/create-audit-log-schema';
+import { ChangeLog } from '../validations/audit-log/create.schema';
 
 export function diffObjects(before: Record<any, any>, after: Record<any, any>): ChangeLog {
   const beforeFiltered: Record<string, any> = {};
