@@ -6,10 +6,9 @@ import { createAuditLog } from '../audit-log/create.service';
 import { deleteCache } from '../../utils/redis/delete-cache';
 import { connectOrDisconnect } from '../../utils/connect-disconnect';
 import { UpdateLicenceDTO } from '../../validations/licence/update.schema';
-import { buildLicenceReference } from '../../utils/build-licence-reference';
 
 export async function updateLicence({ user, ...data }: UpdateLicenceDTO) {
-  const [licence, admin] = await Promise.all([
+  const [licence, _admin] = await Promise.all([
     prisma.licence.findUnique({
       where: { id: data.id },
       include: { admin: true },
@@ -19,23 +18,17 @@ export async function updateLicence({ user, ...data }: UpdateLicenceDTO) {
 
   if (!licence) throw new NotFoundError('Licença não encontrada');
 
-  const number = data.number ?? licence.number;
-  const year = data.creation_date ?? licence.created_at;
-  const name = admin?.name ?? licence.admin?.name;
-
-  const reference = buildLicenceReference({ name, number, year, desc: data.description });
-
   await prisma.$transaction(async (tx) => {
     const updated = await tx.licence.update({
       where: { id: data.id },
       data: {
-        reference,
         file: data.file,
         limit: data.limit,
         number: data.number,
+        reference: data.reference,
+        expires_at: data.expires_at,
         description: data.description,
         creation_date: data.creation_date,
-        expires_at: data.expires_at,
         ...(data.file && { file: data.file }),
         ...connectOrDisconnect('admin', data.admin_id),
       },

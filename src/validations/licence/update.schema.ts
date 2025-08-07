@@ -7,11 +7,12 @@ export const updateLicenceSchema = z.object({
   description: z.coerce.string().optional(),
   coordinates: z.string().optional(),
   file: z.string().optional().nullable(),
-  creation_date: z.coerce.date().optional(),
-  expires_at: z.coerce.date().optional(),
   admin_id: z.coerce.number().optional(),
   limit: z.coerce.number().optional(),
+  reference: z.string().toUpperCase().optional(),
   user: currentUserSchema,
+  creation_date: z.coerce.date().optional(),
+  expires_at: z.coerce.date().optional(),
 });
 
 export type UpdateLicenceDTO = z.infer<typeof updateLicenceSchema>;

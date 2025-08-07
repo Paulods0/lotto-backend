@@ -36,6 +36,7 @@ export async function fetchManyLicences({ limit, page, query = '', admin_id }: P
       description: true,
       reference: true,
       limit: true,
+      status: true,
       coordinates: true,
       admin_id: true,
       creation_date: true,

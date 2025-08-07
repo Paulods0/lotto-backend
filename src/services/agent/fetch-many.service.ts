@@ -58,8 +58,7 @@ export async function fetchManyAgents(params: PaginationParams) {
       province: { select: { id: true, name: true } },
       pos: {
         select: {
-          latitude: true,
-          longitude: true,
+          coordinates: true,
           area: true,
           zone: true,
           type: true,

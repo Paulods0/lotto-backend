@@ -28,7 +28,11 @@ export async function deleteLicence(id: string, user: AuthPayload) {
     });
   });
 
-  await Promise.all([await deleteCache(RedisKeys.licences.all()), await deleteCache(RedisKeys.auditLogs.all())]);
+  await Promise.all([
+    await deleteCache(RedisKeys.licences.all()),
+    await deleteCache(RedisKeys.auditLogs.all()),
+    await deleteCache(RedisKeys.admins.all()),
+  ]);
 
   return id;
 }

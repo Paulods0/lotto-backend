@@ -27,8 +27,7 @@ export async function fetchManyPos({
   const select = {
     id: true,
     id_reference: true,
-    latitude: true,
-    longitude: true,
+    coordinates: true,
     type: true,
     subtype: true,
     admin: true,

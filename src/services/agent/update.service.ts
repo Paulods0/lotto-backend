@@ -97,7 +97,7 @@ export async function updateAgent({ user, ...data }: UpdateAgentDTO) {
         },
       });
 
-      await tx.agent.update({
+      const updated = await tx.agent.update({
         where: { id: agent.id },
         data: {
           ...connectOrDisconnect('area', existingPos.area_id),

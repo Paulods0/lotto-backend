@@ -16,6 +16,9 @@ export async function fetchManyAdmins() {
           select: {
             id: true,
             reference: true,
+            limit: true,
+            status: true,
+            expires_at: true,
             creation_date: true,
           },
         },
