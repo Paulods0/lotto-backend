@@ -78,7 +78,7 @@ function buildFilters(query: string): Prisma.LicenceWhereInput[] {
     end.setDate(end.getDate() + 1);
 
     filters.push({
-      created_at: {
+      creation_date: {
         gte: start,
         lt: end,
       },

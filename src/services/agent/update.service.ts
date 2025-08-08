@@ -1,18 +1,100 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
 import { RedisKeys } from '../../utils/redis/keys';
-import { diffObjects } from '../../utils/diff-objects';
-import { createAuditLog } from '../audit-log/create.service';
 import { deleteCache } from '../../utils/redis/delete-cache';
 import { connectOrDisconnect } from '../../utils/connect-disconnect';
 import { UpdateAgentDTO } from '../../validations/agent/update.schema';
+import { audit } from '../../utils/audit-log';
 
 export async function updateAgent({ user, ...data }: UpdateAgentDTO) {
-  const agent = await prisma.agent.findUnique({ where: { id: data.id } });
-  if (!agent) throw new NotFoundError('Agente não encontrado');
+  await prisma.$transaction(async tx => {
+    const agent = await tx.agent.findUnique({ where: { id: data.id } });
 
-  await prisma.$transaction(async (tx) => {
-    const updated = await tx.agent.update({
+    if (!agent) throw new NotFoundError('Agente não encontrado');
+    let extraRelations = {};
+
+    // Terminal reassociation
+    if (data.terminal_id !== undefined) {
+      await tx.terminal.updateMany({
+        where: { agent_id: agent.id },
+        data: { agent_id: null, id_reference: null },
+      });
+
+      if (data.terminal_id !== null) {
+        const terminal = await tx.terminal.findUnique({
+          where: { id: data.terminal_id },
+        });
+
+        if (!terminal) throw new NotFoundError('Terminal não encontrado');
+
+        if (terminal.agent_id && terminal.agent_id !== agent.id) {
+          await tx.terminal.update({
+            where: { id: data.terminal_id },
+            data: { agent_id: null, id_reference: null },
+          });
+        }
+
+        await tx.terminal.update({
+          where: { id: data.terminal_id },
+          data: {
+            agent_id: agent.id,
+            id_reference: agent.id_reference,
+          },
+        });
+      }
+    }
+
+    // POS reassociation
+    if (data.pos_id !== undefined) {
+      await tx.pos.updateMany({
+        where: { agent_id: agent.id },
+        data: { agent_id: null, id_reference: null },
+      });
+
+      if (data.pos_id !== null) {
+        const pos = await tx.pos.findUnique({
+          where: { id: data.pos_id },
+          select: {
+            agent_id: true,
+            area_id: true,
+            zone_id: true,
+            city_id: true,
+            province_id: true,
+            type_id: true,
+            subtype_id: true,
+          },
+        });
+
+        if (!pos) throw new NotFoundError('POS não encontrado');
+
+        if (pos.agent_id && pos.agent_id !== agent.id) {
+          await tx.pos.update({
+            where: { id: data.pos_id },
+            data: { agent_id: null, id_reference: null },
+          });
+        }
+
+        await tx.pos.update({
+          where: { id: data.pos_id },
+          data: {
+            agent_id: agent.id,
+            id_reference: agent.id_reference,
+          },
+        });
+
+        extraRelations = {
+          ...connectOrDisconnect('area', pos.area_id),
+          ...connectOrDisconnect('zone', pos.zone_id),
+          ...connectOrDisconnect('province', pos.province_id),
+          ...connectOrDisconnect('city', pos.city_id),
+          ...connectOrDisconnect('type', pos.type_id),
+          ...connectOrDisconnect('subtype', pos.subtype_id),
+        };
+      }
+    }
+
+    // Atualiza agente com todos os dados de uma vez
+    const updatedAgent = await tx.agent.update({
       where: { id: data.id },
       data: {
         first_name: data.first_name,
@@ -23,100 +105,16 @@ export async function updateAgent({ user, ...data }: UpdateAgentDTO) {
         phone_number: data.phone_number,
         afrimoney_number: data.afrimoney_number,
         status: data.status,
+        training_date: data.training_date,
+        ...extraRelations,
       },
     });
 
-    if (data.terminal_id) {
-      await tx.terminal.updateMany({
-        where: { agent_id: agent.id },
-        data: {
-          agent_id: null,
-          id_reference: null,
-          status: false,
-        },
-      });
-
-      const terminal = await tx.terminal.findUnique({
-        where: { id: data.terminal_id },
-        select: { agent_id: true },
-      });
-
-      if (terminal?.agent_id && terminal.agent_id !== agent.id) {
-        await tx.terminal.update({
-          where: { id: data.terminal_id },
-          data: { agent_id: null, id_reference: null, status: false },
-        });
-      }
-
-      await tx.terminal.update({
-        where: { id: data.terminal_id },
-        data: {
-          agent_id: agent.id,
-          id_reference: agent.id_reference,
-          status: true,
-        },
-      });
-    }
-
-    if (data.pos_id) {
-      await tx.pos.updateMany({
-        where: { agent_id: agent.id },
-        data: {
-          agent_id: null,
-          id_reference: null,
-        },
-      });
-
-      const existingPos = await tx.pos.findUnique({
-        where: { id: data.pos_id },
-        select: {
-          agent_id: true,
-          area_id: true,
-          zone_id: true,
-          city_id: true,
-          province_id: true,
-          type_id: true,
-          subtype_id: true,
-        },
-      });
-
-      if (!existingPos) throw new NotFoundError('POS não encontrado');
-
-      if (existingPos.agent_id && existingPos.agent_id !== agent.id) {
-        await tx.pos.update({
-          where: { id: data.pos_id },
-          data: { agent_id: null, id_reference: null },
-        });
-      }
-
-      await tx.pos.update({
-        where: { id: data.pos_id },
-        data: {
-          agent_id: agent.id,
-          id_reference: agent.id_reference,
-        },
-      });
-
-      const updated = await tx.agent.update({
-        where: { id: agent.id },
-        data: {
-          ...connectOrDisconnect('area', existingPos.area_id),
-          ...connectOrDisconnect('zone', existingPos.zone_id),
-          ...connectOrDisconnect('province', existingPos.province_id),
-          ...connectOrDisconnect('city', existingPos.city_id),
-          ...connectOrDisconnect('type', existingPos.type_id),
-          ...connectOrDisconnect('subtype', existingPos.subtype_id),
-        },
-      });
-    }
-
-    await createAuditLog(tx, {
-      action: 'UPDATE',
-      entity: 'AGENT',
-      user_name: user.name,
-      changes: diffObjects(data, updated),
-      user_id: user.id,
-      entity_id: agent.id,
+    await audit(tx, 'update', {
+      user,
+      before: agent,
+      after: updatedAgent,
+      entity: 'agent',
     });
   });
 
@@ -126,6 +124,4 @@ export async function updateAgent({ user, ...data }: UpdateAgentDTO) {
     deleteCache(RedisKeys.terminals.all()),
     deleteCache(RedisKeys.auditLogs.all()),
   ]);
-
-  return agent.id;
 }

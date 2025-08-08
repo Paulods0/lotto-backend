@@ -20,6 +20,7 @@ export async function fetchManyAgents(params: PaginationParams & { status?: Agen
     ...(params.area_id && { area_id: params.area_id }),
     ...(params.zone_id && { zone_id: params.zone_id }),
     ...(params.province_id && { province_id: params.province_id }),
+    ...(params.status && { status: { equals: params.status as AgentStatus } }),
   };
 
   const offset = (params.page - 1) * params.limit;
@@ -29,16 +30,7 @@ export async function fetchManyAgents(params: PaginationParams & { status?: Agen
     take: params.limit,
     skip: offset,
     orderBy: { created_at: 'asc' },
-    select: {
-      id: true,
-      genre: true,
-      status: true,
-      terminal: true,
-      last_name: true,
-      first_name: true,
-      id_reference: true,
-      phone_number: true,
-      afrimoney_number: true,
+    include: {
       area: { select: { id: true, name: true } },
       zone: { select: { id: true, number: true } },
       city: { select: { id: true, name: true } },
@@ -66,10 +58,17 @@ function buildFilters(query: string | undefined) {
   let filters: Prisma.AgentWhereInput[] = [];
   const numberValue = Number(query);
 
+  console.log(query);
+
   if (!query?.trim()) return filters;
 
+  if (Object.values(AgentStatus).includes(query.toLowerCase() as AgentStatus)) {
+    filters.push({
+      status: { equals: query.toLowerCase() as AgentStatus },
+    });
+  }
+
   filters.push(
-    { status: { equals: query as AgentStatus } },
     { bi_number: { contains: query, mode: 'insensitive' } },
     { last_name: { contains: query, mode: 'insensitive' } },
     { first_name: { contains: query, mode: 'insensitive' } }
@@ -81,6 +80,20 @@ function buildFilters(query: string | undefined) {
       { afrimoney_number: { equals: numberValue } },
       { id_reference: numberValue }
     );
+  }
+
+  const parsedDate = new Date(query);
+  if (!isNaN(parsedDate.getTime())) {
+    const start = new Date(parsedDate);
+    const end = new Date(parsedDate);
+    end.setDate(end.getDate() + 1);
+
+    filters.push({
+      training_date: {
+        gte: start,
+        lt: end,
+      },
+    });
   }
 
   return filters;
