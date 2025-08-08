@@ -26,12 +26,13 @@ export const RedisKeys = {
   agents: {
     all: () => 'agents:*',
     byId: (id: string) => `agents:${id}`,
-    listWithFilters: (params: PaginationParams & { status?: AgentStatus }) => {
+    listWithFilters: (params: PaginationParams) => {
       const {
         limit,
         page,
         query,
         status,
+        training_date,
         area_id = 'all',
         zone_id = 'all',
         city_id = 'all',
@@ -39,7 +40,7 @@ export const RedisKeys = {
         province_id = 'all',
       } = params;
 
-      return `agents:${limit}:page:${page}:query:${query}:type:${type_id}:area:${area_id}:zone:${zone_id}:status:${status}:city:${city_id}:province:${province_id}`;
+      return `agents:${limit}:${training_date}:page:${page}:query:${query}:type:${type_id}:area:${area_id}:zone:${zone_id}:status:${status}:city:${city_id}:province:${province_id}`;
     },
   },
 
@@ -51,15 +52,17 @@ export const RedisKeys = {
         limit,
         page,
         query,
+        status,
         area_id = 'all',
         zone_id = 'all',
         city_id = 'all',
         type_id = 'all',
+        admin_id = 'all',
         subtype_id = 'all',
         province_id = 'all',
       } = params;
 
-      return `pos:${limit}:page:${page}:query:${query}:type:${type_id}:subtype${subtype_id}:area:${area_id}:zone:${zone_id}:city:${city_id}:province:${province_id}`;
+      return `pos:${limit}:page:${page}:query:status${status}:admin_id:${admin_id}:${query}:type:${type_id}:subtype${subtype_id}:area:${area_id}:zone:${zone_id}:city:${city_id}:province:${province_id}`;
     },
   },
 

@@ -1,11 +1,11 @@
 import prisma from '../../lib/prisma';
-import { AgentStatus, Prisma } from '@prisma/client';
 import { RedisKeys } from '../../utils/redis/keys';
+import { AgentStatus, Prisma } from '@prisma/client';
 import { getCache } from '../../utils/redis/get-cache';
 import { setCache } from '../../utils/redis/set-cache';
 import { PaginationParams } from '../../@types/pagination-params';
 
-export async function fetchManyAgents(params: PaginationParams & { status?: AgentStatus }) {
+export async function fetchManyAgents(params: PaginationParams) {
   const cacheKey = RedisKeys.agents.listWithFilters(params);
 
   const cached = await getCache(cacheKey);
@@ -13,13 +13,33 @@ export async function fetchManyAgents(params: PaginationParams & { status?: Agen
 
   let search = buildFilters(params.query);
 
+  let start: Date | undefined;
+  let end: Date | undefined;
+  let isValidDate: boolean = false;
+
+  if (params.training_date) {
+    const parsedDate = new Date(params.training_date);
+    isValidDate = !isNaN(parsedDate.getTime());
+
+    if (isValidDate) {
+      start = new Date(parsedDate);
+      end = new Date(parsedDate);
+      end.setDate(end.getDate() + 1);
+    }
+  }
+
   const where: Prisma.AgentWhereInput = {
     ...(search.length > 0 ? { OR: search } : {}),
     ...(params.type_id && { type_id: params.type_id }),
     ...(params.city_id && { city_id: params.city_id }),
     ...(params.area_id && { area_id: params.area_id }),
     ...(params.zone_id && { zone_id: params.zone_id }),
+    ...(params.status && { status: params.status as AgentStatus }),
     ...(params.province_id && { province_id: params.province_id }),
+    training_date: {
+      gte: start,
+      lt: end,
+    },
   };
 
   const offset = (params.page - 1) * params.limit;
@@ -30,6 +50,7 @@ export async function fetchManyAgents(params: PaginationParams & { status?: Agen
     skip: offset,
     orderBy: { created_at: 'asc' },
     include: {
+      terminal: true,
       area: { select: { id: true, name: true } },
       zone: { select: { id: true, number: true } },
       city: { select: { id: true, name: true } },
@@ -57,8 +78,6 @@ function buildFilters(query: string | undefined) {
   let filters: Prisma.AgentWhereInput[] = [];
   const numberValue = Number(query);
 
-  console.log(query);
-
   if (!query?.trim()) return filters;
 
   if (Object.values(AgentStatus).includes(query.toLowerCase() as AgentStatus)) {
@@ -79,20 +98,6 @@ function buildFilters(query: string | undefined) {
       { afrimoney_number: { equals: numberValue } },
       { id_reference: numberValue }
     );
-  }
-
-  const parsedDate = new Date(query);
-  if (!isNaN(parsedDate.getTime())) {
-    const start = new Date(parsedDate);
-    const end = new Date(parsedDate);
-    end.setDate(end.getDate() + 1);
-
-    filters.push({
-      training_date: {
-        gte: start,
-        lt: end,
-      },
-    });
   }
 
   return filters;
