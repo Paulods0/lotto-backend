@@ -15,7 +15,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = ['*'];
+const allowedOrigins = ['https://mtjogos.co.ao'];
 
 app.use(
   cors({
