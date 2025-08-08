@@ -1,99 +1,57 @@
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { RedisKeys } from '../../utils/redis/keys';
 import { getCache } from '../../utils/redis/get-cache';
-import { PaginationParams } from '../../@types/pagination-params';
 import { setCache } from '../../utils/redis/set-cache';
+import { PaginationParams } from '../../@types/pagination-params';
 
-export async function fetchManyPos({
-  limit = 30,
-  page = 1,
-  query,
-  type_id,
-  city_id,
-  area_id,
-  zone_id,
-  province_id,
-}: PaginationParams & {
-  type_id?: number;
-  city_id?: number;
-  area_id?: number;
-  zone_id?: number;
-  province_id?: number;
-}) {
-  const DEFAULT_LIMIT = limit;
-  const DEFAULT_PAGE = page;
-  const DEFAULT_QUERY = query?.trim() || 'none';
-
-  const select = {
-    id: true,
-    id_reference: true,
-    coordinates: true,
-    type: true,
-    subtype: true,
-    admin: true,
-    province: true,
-    area: true,
-    zone: true,
-    city: true,
-    licence: true,
-    agent: {
-      select: {
-        id: true,
-        id_reference: true,
-        first_name: true,
-        last_name: true,
-      },
-    },
-  };
-
-  const where: Prisma.PosWhereInput = {
-    ...(type_id && { type_id }),
-    ...(city_id && { city_id }),
-    ...(area_id && { area_id }),
-    ...(zone_id && { zone_id }),
-    ...(province_id && { province_id }),
-  };
-
-  if (query) {
-    const numericQuery = Number(query);
-    const searchConditions: Prisma.PosWhereInput[] = [];
-
-    if (!isNaN(numericQuery)) {
-      searchConditions.push({ id_reference: numericQuery });
-    }
-
-    if (searchConditions.length > 0) {
-      where.OR = searchConditions;
-    }
-  }
-
-  const cacheKey = [
-    'pos',
-    `limit:${DEFAULT_LIMIT}`,
-    `page:${DEFAULT_PAGE}`,
-    `query:${DEFAULT_QUERY}`,
-    type_id && `type:${type_id}`,
-    city_id && `city:${city_id}`,
-    area_id && `area:${area_id}`,
-    zone_id && `zone:${zone_id}`,
-    province_id && `province:${province_id}`,
-  ]
-    .filter(Boolean)
-    .join(':');
+export async function fetchManyPos(params: PaginationParams) {
+  const cacheKey = RedisKeys.pos.listWithFilters(params);
 
   const cached = await getCache(cacheKey);
   if (cached) return cached;
 
-  const orderBy: Prisma.PosOrderByWithRelationInput = { created_at: 'asc' };
+  const filters = buildFilters(params.query);
 
-  const offset = (DEFAULT_PAGE - 1) * DEFAULT_LIMIT;
+  const where: Prisma.PosWhereInput = {
+    ...(filters?.length ? { OR: filters } : {}),
+    ...(params.type_id && { type_id: params.type_id }),
+    ...(params.city_id && { city_id: params.city_id }),
+    ...(params.area_id && { area_id: params.area_id }),
+    ...(params.zone_id && { zone_id: params.zone_id }),
+    ...(params.subtype_id && { type_id: params.subtype_id }),
+    ...(params.subtype_id && { subtype_id: params.subtype_id }),
+    ...(params.province_id && { province_id: params.province_id }),
+  };
+
+  const offset = (params.page - 1) * params.limit;
 
   const pos = await prisma.pos.findMany({
     where,
     skip: offset,
-    take: DEFAULT_LIMIT,
-    orderBy,
-    select,
+    take: params.limit,
+    orderBy: { created_at: 'asc' },
+    select: {
+      id: true,
+      id_reference: true,
+      coordinates: true,
+      type: true,
+      subtype: true,
+      admin: true,
+      province: true,
+      area: true,
+      zone: true,
+      city: true,
+      licence: true,
+      agent: {
+        select: {
+          id: true,
+          id_reference: true,
+          first_name: true,
+          last_name: true,
+        },
+      },
+    },
   });
 
   if (pos.length > 0) {
@@ -101,4 +59,21 @@ export async function fetchManyPos({
   }
 
   return pos;
+}
+
+function buildFilters(query: string | undefined) {
+  const filters: Prisma.PosWhereInput[] = [];
+  const numericQuery = Number(query);
+
+  if (!query?.trim()) return filters;
+
+  filters.push({
+    coordinates: { contains: query },
+  });
+
+  if (!isNaN(numericQuery)) {
+    filters.push({ id_reference: numericQuery });
+  }
+
+  return filters;
 }

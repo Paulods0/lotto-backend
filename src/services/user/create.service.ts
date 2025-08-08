@@ -14,7 +14,7 @@ export async function createUser({ user, ...data }: CreateUserDTO) {
   const salt = bcrypt.genSaltSync(10);
   const hashedPassword = await bcrypt.hash(data.password, salt);
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     const newUser = await tx.user.create({
       data: {
         first_name: data.first_name,
@@ -27,14 +27,14 @@ export async function createUser({ user, ...data }: CreateUserDTO) {
 
     const { id, created_at, password, ...rest } = newUser;
 
-    await createAuditLog(tx, {
-      action: 'CREATE',
-      entity: 'USER',
-      user_name: user.name,
-      entity_id: newUser.id,
-      user_id: user.id,
-      metadata: rest,
-    });
+    // await createAuditLog(tx, {
+    //   action: 'CREATE',
+    //   entity: 'USER',
+    //   user_name: user.name,
+    //   entity_id: newUser.id,
+    //   user_id: user.id,
+    //   metadata: rest,
+    // });
   });
 
   await deleteCache(RedisKeys.users.all());

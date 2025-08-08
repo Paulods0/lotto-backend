@@ -6,6 +6,7 @@ import { setCache } from '../../utils/redis/set-cache';
 
 export async function getPos(id: string) {
   const cacheKey = RedisKeys.pos.byId(id);
+
   const cached = await getCache(cacheKey);
 
   if (cached) return cached;

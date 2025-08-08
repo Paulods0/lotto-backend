@@ -1,55 +1,39 @@
 import prisma from '../../lib/prisma';
-import { Prisma } from '@prisma/client';
 import { RedisKeys } from '../../utils/redis/keys';
 import { getCache } from '../../utils/redis/get-cache';
-import { PaginationParams } from '../../@types/pagination-params';
 import { setCache } from '../../utils/redis/set-cache';
+import { Prisma, TerminalStatus } from '@prisma/client';
+import { PaginationParams } from '../../@types/pagination-params';
 
 export async function fetchManyTerminals(params: PaginationParams) {
-  const { limit, page, query = '', area_id, city_id, province_id, zone_id } = params;
-
-  const cacheKey = RedisKeys.terminals.listWithFilters({
-    limit,
-    page,
-    query: query || 'none',
-    area_id,
-    zone_id,
-    province_id,
-    city_id,
-  });
+  const cacheKey = RedisKeys.terminals.listWithFilters(params);
 
   const cached = await getCache(cacheKey);
   if (cached) return cached;
 
-  const searchFilters = buildSearchFilters(query);
+  const filters = buildFilters(params.query);
 
   const where: Prisma.TerminalWhereInput = {
-    ...(searchFilters.length > 0 ? { OR: searchFilters } : {}),
-    ...(area_id && { area_id }),
-    ...(zone_id && { zone_id }),
-    ...(city_id && { city_id }),
-    ...(province_id && { province_id }),
+    ...(filters.length > 0 ? { OR: filters } : {}),
+    ...(params.area_id && { area_id: params.area_id }),
+    ...(params.zone_id && { zone_id: params.zone_id }),
+    ...(params.city_id && { city_id: params.city_id }),
+    ...(params.agent_id && { agent_id: params.agent_id }),
+    ...(params.province_id && { province_id: params.province_id }),
   };
 
-  const offset = (page - 1) * limit;
+  const offset = (params.page - 1) * params.limit;
 
   const terminals = await prisma.terminal.findMany({
     where,
-    take: limit,
+    take: params.limit,
     skip: offset,
     orderBy: { created_at: 'asc' },
-    select: {
-      id: true,
-      pin: true,
-      puk: true,
-      serial: true,
-      status: true,
-      sim_card: true,
-      id_reference: true,
-      city: { select: { id: true, name: true } },
-      area: { select: { id: true, name: true } },
-      zone: { select: { id: true, number: true } },
-      province: { select: { id: true, name: true } },
+    include: {
+      city: true,
+      area: true,
+      zone: true,
+      province: true,
       agent: {
         select: {
           id: true,
@@ -68,7 +52,7 @@ export async function fetchManyTerminals(params: PaginationParams) {
   return terminals;
 }
 
-function buildSearchFilters(query: string): Prisma.TerminalWhereInput[] {
+function buildFilters(query: string): Prisma.TerminalWhereInput[] {
   const filters: Prisma.TerminalWhereInput[] = [];
 
   if (!query) return filters;
@@ -77,6 +61,11 @@ function buildSearchFilters(query: string): Prisma.TerminalWhereInput[] {
   const isNumeric = !isNaN(numericQuery);
 
   filters.push({ serial: { contains: query, mode: 'insensitive' } });
+  filters.push({ device_id: { contains: query, mode: 'insensitive' } });
+
+  if (Object.values(TerminalStatus).includes(query as TerminalStatus)) {
+    filters.push({ status: { equals: query as TerminalStatus } });
+  }
 
   if (isNumeric) {
     filters.push(
@@ -87,9 +76,19 @@ function buildSearchFilters(query: string): Prisma.TerminalWhereInput[] {
     );
   }
 
-  // Filtro por status booleano
-  if (query === 'true' || query === 'false') {
-    filters.push({ status: query === 'true' });
+  const parsedDate = new Date(query);
+
+  if (!isNaN(parsedDate.getTime())) {
+    const start = new Date(parsedDate);
+    const end = new Date(parsedDate);
+    end.setDate(end.getDate() + 1);
+
+    filters.push({
+      delivery_date: {
+        gte: start,
+        lt: end,
+      },
+    });
   }
 
   return filters;

@@ -1,14 +1,13 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { deleteCache } from '../../utils/redis/delete-cache';
-import { diffObjects } from '../../utils/diff-objects';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
-import { createAuditLog } from '../audit-log/create.service';
+import { deleteCache } from '../../utils/redis/delete-cache';
 import { connectOrDisconnect } from '../../utils/connect-disconnect';
 import { UpdateTerminalDTO } from '../../validations/terminal/update.schema';
 
 export async function updateTerminal({ user, ...data }: UpdateTerminalDTO) {
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     const terminal = await tx.terminal.findUnique({
       where: { id: data.id },
     });
@@ -31,7 +30,6 @@ export async function updateTerminal({ user, ...data }: UpdateTerminalDTO) {
       city_id = agent.city_id;
       province_id = agent.province_id;
       zone_id = agent.zone_id;
-      status = true;
 
       await tx.terminal.updateMany({
         where: { agent_id: agent.id },
@@ -42,7 +40,6 @@ export async function updateTerminal({ user, ...data }: UpdateTerminalDTO) {
           city_id: null,
           province_id: null,
           zone_id: null,
-          status: false,
         },
       });
     }
@@ -50,11 +47,11 @@ export async function updateTerminal({ user, ...data }: UpdateTerminalDTO) {
     const { id, created_at, ...updated } = await tx.terminal.update({
       where: { id: data.id },
       data: {
-        status,
         id_reference,
         pin: data.pin,
         puk: data.puk,
         serial: data.serial,
+        status: data.status,
         sim_card: data.sim_card,
         ...connectOrDisconnect('area', area_id),
         ...connectOrDisconnect('city', city_id),
@@ -64,21 +61,19 @@ export async function updateTerminal({ user, ...data }: UpdateTerminalDTO) {
       },
     });
 
-    await createAuditLog(tx, {
-      action: 'UPDATE',
-      entity: 'TERMINAL',
-      user_name: user.name,
-      entity_id: data.id,
-      user_id: user.id,
-      changes: diffObjects(data, updated),
+    await audit(tx, 'update', {
+      user,
+      entity: 'terminal',
+      before: terminal,
+      after: updated,
     });
-
-    return updated;
   });
 
-  await deleteCache(RedisKeys.terminals.all()), await deleteCache(RedisKeys.auditLogs.all());
+  const promises = [deleteCache(RedisKeys.terminals.all()), deleteCache(RedisKeys.auditLogs.all())];
 
   if (data.agent_id) {
-    await deleteCache(RedisKeys.agents.all());
+    promises.push(deleteCache(RedisKeys.agents.all()));
   }
+
+  await Promise.all(promises);
 }

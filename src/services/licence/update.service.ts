@@ -17,14 +17,31 @@ export async function updateLicence({ user, ...data }: UpdateLicenceDTO) {
   ]);
 
   if (!licence) throw new NotFoundError('Licença não encontrada');
-  if (!admin) throw new NotFoundError('Administração não encontrada');
+  if (data.admin_id && !admin) throw new NotFoundError('Administração não encontrada');
+
+  const posCount = await prisma.pos.count({
+    where: { licence_id: data.id },
+  });
+
+  const newStatus = data.limit && posCount < data.limit ? 'livre' : 'em_uso';
 
   await prisma.$transaction(async tx => {
     const after = await tx.licence.update({
       where: { id: data.id },
       data: {
-        ...data,
+        file: data.file,
+        limit: data.limit,
+        status: newStatus,
+        number: data.number,
+        reference: data.reference,
+        expires_at: data.expires_at,
+        description: data.description,
+        coordinates: data.coordinates,
+        creation_date: data.creation_date,
         ...connectOrDisconnect('admin', data.admin_id),
+      },
+      include: {
+        admin: true,
       },
     });
 

@@ -1,53 +1,59 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { deleteCache } from '../../utils/redis/delete-cache';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
 import { AuthPayload } from '../../@types/auth-payload';
-import { createAuditLog } from '../audit-log/create.service';
+import { deleteCache } from '../../utils/redis/delete-cache';
 
 export async function deletePos(id: string, user: AuthPayload) {
-  // Verifica se o POS existe
-  const pos = await prisma.pos.findUnique({ where: { id } });
+  await prisma.$transaction(async tx => {
+    const pos = await tx.pos.findUnique({ where: { id } });
+    if (!pos) throw new NotFoundError(`O POS não foi encontrado.`);
 
-  if (!pos) {
-    throw new NotFoundError(`POS com o ID ${id} não foi encontrado.`);
-  }
+    // Se o POS estiver associado a um agente, limpa os campos do agente
+    if (pos.agent_id) {
+      await tx.agent.update({
+        where: { id: pos.agent_id },
+        data: {
+          type_id: null,
+          subtype_id: null,
+          zone_id: null,
+          area_id: null,
+          province_id: null,
+          city_id: null,
+        },
+      });
+    }
 
-  // Se o POS estiver associado a um agente, desassocia e limpa os campos do agente
-  if (pos.agent_id) {
-    await prisma.agent.update({
-      where: { id: pos.agent_id },
-      data: {
-        type_id: null,
-        subtype_id: null,
-        zone_id: null,
-        area_id: null,
-        province_id: null,
-        city_id: null,
-      },
-    });
-  }
+    await tx.pos.delete({ where: { id } });
 
-  // Deleta o POS
-  await prisma.$transaction(async (tx) => {
-    const deletedPos = await tx.pos.delete({ where: { id } });
+    if (pos.licence_id) {
+      const remainingPosCount = await tx.pos.count({
+        where: { licence_id: pos.licence_id },
+      });
 
-    await createAuditLog(tx, {
-      action: 'DELETE',
-      entity: 'POS',
-      user_name: user.name,
-      metadata: deletedPos as Record<string, any>,
-      user_id: user.id,
-      entity_id: id,
+      const status = remainingPosCount === 0 ? 'livre' : 'em_uso';
+
+      await tx.licence.update({
+        where: { id: pos.licence_id },
+        data: { status },
+      });
+    }
+
+    await audit(tx, 'delete', {
+      entity: 'pos',
+      user,
+      after: null,
+      before: pos,
     });
   });
 
   // Limpa os caches
   await Promise.all([
-    await deleteCache(RedisKeys.pos.all()),
-    await deleteCache(RedisKeys.admins.all()),
-    await deleteCache(RedisKeys.auditLogs.all()),
-    await deleteCache(RedisKeys.agents.all()),
-    await deleteCache(RedisKeys.licences.all()),
+    deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.admins.all()),
+    deleteCache(RedisKeys.agents.all()),
+    deleteCache(RedisKeys.licences.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
   ]);
 }

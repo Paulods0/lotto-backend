@@ -1,45 +1,32 @@
 import prisma from '../../lib/prisma';
-import { Prisma } from '@prisma/client';
+import { AgentStatus, Prisma } from '@prisma/client';
 import { RedisKeys } from '../../utils/redis/keys';
 import { getCache } from '../../utils/redis/get-cache';
 import { setCache } from '../../utils/redis/set-cache';
 import { PaginationParams } from '../../@types/pagination-params';
 
-export async function fetchManyAgents(params: PaginationParams) {
-  const { limit, page, query = '', area_id, city_id, province_id, status, type_id, zone_id } = params;
-
-  const cacheKey = RedisKeys.agents.listWithFilters({
-    limit,
-    page,
-    query: query || 'none',
-    area_id,
-    city_id,
-    province_id,
-    status,
-    type_id,
-    zone_id,
-  });
+export async function fetchManyAgents(params: PaginationParams & { status?: AgentStatus }) {
+  const cacheKey = RedisKeys.agents.listWithFilters(params);
 
   const cached = await getCache(cacheKey);
   if (cached) return cached;
 
-  let search = buildAgentsFilter(query);
+  let search = buildFilters(params.query);
 
   const where: Prisma.AgentWhereInput = {
     ...(search.length > 0 ? { OR: search } : {}),
-    ...(typeof status !== 'undefined' ? { status } : {}),
-    ...(typeof type_id !== 'undefined' ? { type_id } : {}),
-    ...(typeof city_id !== 'undefined' ? { city_id } : {}),
-    ...(typeof area_id !== 'undefined' ? { area_id } : {}),
-    ...(typeof zone_id !== 'undefined' ? { zone_id } : {}),
-    ...(typeof province_id !== 'undefined' ? { province_id } : {}),
+    ...(params.type_id && { type_id: params.type_id }),
+    ...(params.city_id && { city_id: params.city_id }),
+    ...(params.area_id && { area_id: params.area_id }),
+    ...(params.zone_id && { zone_id: params.zone_id }),
+    ...(params.province_id && { province_id: params.province_id }),
   };
 
-  const offset = (page - 1) * limit;
+  const offset = (params.page - 1) * params.limit;
 
   const agents = await prisma.agent.findMany({
     where,
-    take: limit,
+    take: params.limit,
     skip: offset,
     orderBy: { created_at: 'asc' },
     select: {
@@ -75,25 +62,26 @@ export async function fetchManyAgents(params: PaginationParams) {
   return agents;
 }
 
-function buildAgentsFilter(query: string | undefined) {
-  let search: Prisma.AgentWhereInput[] = [];
+function buildFilters(query: string | undefined) {
+  let filters: Prisma.AgentWhereInput[] = [];
+  const numberValue = Number(query);
 
-  if (!query?.trim()) return search;
+  if (!query?.trim()) return filters;
 
-  search.push(
-    { first_name: { contains: query, mode: 'insensitive' } },
+  filters.push(
+    { status: { equals: query as AgentStatus } },
+    { bi_number: { contains: query, mode: 'insensitive' } },
     { last_name: { contains: query, mode: 'insensitive' } },
-    { bi_number: { contains: query, mode: 'insensitive' } }
+    { first_name: { contains: query, mode: 'insensitive' } }
   );
 
-  const numberValue = Number(query);
   if (!isNaN(numberValue)) {
-    search.push(
+    filters.push(
       { phone_number: { equals: numberValue } },
       { afrimoney_number: { equals: numberValue } },
       { id_reference: numberValue }
     );
   }
 
-  return search;
+  return filters;
 }

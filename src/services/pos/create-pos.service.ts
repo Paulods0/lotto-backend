@@ -1,13 +1,13 @@
 import prisma from '../../lib/prisma';
-import { BadRequestError, NotFoundError } from '../../errors';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
 import { deleteCache } from '../../utils/redis/delete-cache';
-import { createAuditLog } from '../audit-log/create.service';
+import { BadRequestError, NotFoundError } from '../../errors';
 import { connectIfDefined } from '../../utils/connect-disconnect';
 import { CreatePosDTO } from '../../validations/pos/create.schema';
 
 export async function createPos({ user, ...data }: CreatePosDTO) {
-  const result = await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     let id_reference: number | null = null;
 
     if (data.agent_id) {
@@ -37,23 +37,25 @@ export async function createPos({ user, ...data }: CreatePosDTO) {
       if (!licence) throw new NotFoundError('Licença não encontrada');
 
       const posCount = licence.pos.length;
-      const limit = licence.limit ?? Infinity;
+      const limit = licence.limit;
 
       if (posCount >= limit) {
-        throw new BadRequestError('Esta licença já atingiu o número máximo de POS permitidos.');
+        throw new BadRequestError('Esta licença já está a ser usada');
       }
+
+      // Marcar licença como 'em_uso' se atingir ou ultrapassar o limite de POS permitidos
       const limitReached = posCount + 1 >= limit;
 
       await tx.licence.update({
         where: { id: licence.id },
         data: {
           coordinates: data.coordinates,
-          status: !limitReached,
+          status: limitReached ? 'em_uso' : 'livre',
         },
       });
     }
 
-    const pos = await tx.pos.create({
+    const { id, created_at, ...pos } = await tx.pos.create({
       data: {
         id_reference,
         coordinates: data.coordinates,
@@ -69,23 +71,19 @@ export async function createPos({ user, ...data }: CreatePosDTO) {
       },
     });
 
-    await createAuditLog(tx, {
-      action: 'CREATE',
-      entity: 'POS',
-      user_name: user.name,
-      metadata: pos as Record<string, any>,
-      user_id: user.id,
-      entity_id: pos.id,
+    await audit(tx, 'create', {
+      entity: 'pos',
+      user,
+      after: pos,
+      before: null,
     });
-
-    return pos.id;
   });
 
-  await Promise.all([deleteCache(RedisKeys.pos.all()), deleteCache(RedisKeys.auditLogs.all())]);
+  const promises = [deleteCache(RedisKeys.pos.all()), deleteCache(RedisKeys.auditLogs.all())];
 
-  if (data.admin_id) await deleteCache(RedisKeys.admins.all());
-  if (data.agent_id) await deleteCache(RedisKeys.agents.all());
-  if (data.licence_id) await deleteCache(RedisKeys.licences.all());
+  if (data.admin_id) promises.push(deleteCache(RedisKeys.admins.all()));
+  if (data.agent_id) promises.push(deleteCache(RedisKeys.agents.all()));
+  if (data.licence_id) promises.push(deleteCache(RedisKeys.licences.all()));
 
-  return result;
+  await Promise.all(promises);
 }

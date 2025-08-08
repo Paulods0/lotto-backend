@@ -4,6 +4,7 @@ import { createLicenceSchema } from './create.schema';
 
 export const updateLicenceSchema = createLicenceSchema.partial().extend({
   id: z.uuid(),
+  admin_id: z.number().optional(),
   user: currentUserSchema,
 });
 

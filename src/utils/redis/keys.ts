@@ -1,3 +1,4 @@
+import { AgentStatus } from '@prisma/client';
 import { PaginationParams } from '../../@types/pagination-params';
 
 export const RedisKeys = {
@@ -23,16 +24,16 @@ export const RedisKeys = {
   agents: {
     all: () => 'agents:*',
     byId: (id: string) => `agents:${id}`,
-    listWithFilters: (params: PaginationParams) => {
+    listWithFilters: (params: PaginationParams & { status?: AgentStatus }) => {
       const {
         limit,
         page,
         query,
+        status,
         area_id = 'all',
         zone_id = 'all',
         city_id = 'all',
         type_id = 'all',
-        status,
         province_id = 'all',
       } = params;
 
@@ -43,6 +44,21 @@ export const RedisKeys = {
   pos: {
     all: () => 'pos:*',
     byId: (id: string) => `pos:${id}`,
+    listWithFilters: (params: PaginationParams) => {
+      const {
+        limit,
+        page,
+        query,
+        area_id = 'all',
+        zone_id = 'all',
+        city_id = 'all',
+        type_id = 'all',
+        subtype_id = 'all',
+        province_id = 'all',
+      } = params;
+
+      return `pos:${limit}:page:${page}:query:${query}:type:${type_id}:subtype${subtype_id}:area:${area_id}:zone:${zone_id}:city:${city_id}:province:${province_id}`;
+    },
   },
 
   licences: {

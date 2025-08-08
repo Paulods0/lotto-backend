@@ -5,10 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
-    "p:seed": "tsx src/database/seed.ts",
-    "p:generate": "prisma generate",
-    "p:migrate": "prisma migrate dev",
-    "p:gen:mg": "prisma generate && prisma migrate dev",
+    "seed": "tsx src/database/seed.ts",
     "build": "tsc"
   },
   "dependencies": {
