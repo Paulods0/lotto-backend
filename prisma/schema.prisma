@@ -14,6 +14,8 @@ model User {
   email                String              @unique
   password             String
   role                 UserRole
+  zone_id              String?
+  area_id              String?
   created_at           DateTime            @default(now())
   reset_password_token ResetPasswordToken?
 
@@ -31,19 +33,22 @@ model Agent {
   agent_type       AgentType
   bi_number        String?
   status           AgentStatus @default(agendado)
-  created_at       DateTime    @default(now())
   area_id          Int?
   city_id          Int?
   type_id          Int?
   zone_id          Int?
-  province_id      Int?
   subtype_id       Int?
-  area             Area?       @relation(fields: [area_id], references: [id])
-  city             City?       @relation(fields: [city_id], references: [id])
-  province         Province?   @relation(fields: [province_id], references: [id])
-  subtype          Subtype?    @relation(fields: [subtype_id], references: [id])
-  type             Type?       @relation(fields: [type_id], references: [id])
-  zone             Zone?       @relation(fields: [zone_id], references: [id])
+  province_id      Int?
+
+  training_date DateTime
+  created_at    DateTime @default(now())
+
+  area     Area?     @relation(fields: [area_id], references: [id])
+  city     City?     @relation(fields: [city_id], references: [id])
+  type     Type?     @relation(fields: [type_id], references: [id])
+  zone     Zone?     @relation(fields: [zone_id], references: [id])
+  subtype  Subtype?  @relation(fields: [subtype_id], references: [id])
+  province Province? @relation(fields: [province_id], references: [id])
 
   terminal Terminal?
   pos      Pos?
@@ -52,24 +57,29 @@ model Agent {
 }
 
 model Terminal {
-  id           String    @id @default(uuid())
-  id_reference Int?      @unique
-  serial       String
-  pin          Int?
-  puk          Int?
-  status       Boolean   @default(false)
-  agent_id     String?   @unique
-  created_at   DateTime  @default(now())
-  sim_card     Int
-  area_id      Int?
-  city_id      Int?
-  province_id  Int?
-  zone_id      Int?
-  agent        Agent?    @relation(fields: [agent_id], references: [id])
-  area         Area?     @relation(fields: [area_id], references: [id])
-  city         City?     @relation(fields: [city_id], references: [id])
-  province     Province? @relation(fields: [province_id], references: [id])
-  zone         Zone?     @relation(fields: [zone_id], references: [id])
+  id            String          @id @default(uuid())
+  id_reference  Int?            @unique
+  serial        String
+  pin           Int?
+  puk           Int?
+  sim_card      Int
+  device_id     String?
+  note          String?
+  delivery_date DateTime
+  status        TerminalStatus? @default(stock)
+  created_at    DateTime        @default(now())
+
+  area_id     Int?
+  city_id     Int?
+  zone_id     Int?
+  province_id Int?
+  agent_id    String? @unique
+
+  area     Area?     @relation(fields: [area_id], references: [id])
+  city     City?     @relation(fields: [city_id], references: [id])
+  zone     Zone?     @relation(fields: [zone_id], references: [id])
+  agent    Agent?    @relation(fields: [agent_id], references: [id])
+  province Province? @relation(fields: [province_id], references: [id])
 
   @@map("terminals")
 }
@@ -89,32 +99,33 @@ model Pos {
   zone_id      Int?
   city_id      Int?
 
-  admin    Administration? @relation(fields: [admin_id], references: [id])
-  agent    Agent?          @relation(fields: [agent_id], references: [id])
   area     Area?           @relation(fields: [area_id], references: [id])
   city     City?           @relation(fields: [city_id], references: [id])
-  licence  Licence?        @relation(fields: [licence_id], references: [id])
-  province Province?       @relation(fields: [province_id], references: [id])
-  subtype  Subtype?        @relation(fields: [subtype_id], references: [id])
   type     Type?           @relation(fields: [type_id], references: [id])
   zone     Zone?           @relation(fields: [zone_id], references: [id])
+  admin    Administration? @relation(fields: [admin_id], references: [id])
+  agent    Agent?          @relation(fields: [agent_id], references: [id])
+  subtype  Subtype?        @relation(fields: [subtype_id], references: [id])
+  licence  Licence?        @relation(fields: [licence_id], references: [id])
+  province Province?       @relation(fields: [province_id], references: [id])
 
   @@map("pos")
 }
 
 model Licence {
-  id            String    @id @default(uuid())
+  id            String        @id @default(uuid())
   number        String
   description   String
   file          String?
   coordinates   String?
   reference     String
-  status        Boolean   @default(true)
-  limit         Int       @default(1)
-  admin_id      Int?
-  creation_date DateTime? @default(now())
+  limit         Int           @default(1)
+  status        LicenceStatus @default(livre)
+  created_at    DateTime      @default(now())
   expires_at    DateTime?
-  created_at    DateTime  @default(now())
+  creation_date DateTime?     @default(now())
+
+  admin_id Int?
 
   admin Administration? @relation(fields: [admin_id], references: [id])
   pos   Pos[]
@@ -123,10 +134,10 @@ model Licence {
 }
 
 model Administration {
-  name     String
   id       Int       @id @default(autoincrement())
-  licences Licence[]
+  name     String
   pos      Pos[]
+  licences Licence[]
 
   @@map("administrations")
 }
@@ -200,24 +211,14 @@ model Subtype {
 
 model AuditLog {
   id         String      @id @default(uuid())
-  entity     String // Ex: 'User', 'Agent', 'Post'
-  entity_id  String? // ID do objeto afetado
-  user_id    String? // ID do utilizador que fez a alteração
-  user_name  String // Nome do utilizador
+  entity     AuditEntity
+  user_name  String
+  user_email String
   action     AuditAction
-  changes    Json? // Usado em updates: { field: { old: value, new: value } }
-  metadata   Json? // Info extra: IP, userAgent, etc
+  changes    Json
   created_at DateTime    @default(now())
 
   @@map("audit_logs")
-}
-
-enum AuditAction {
-  CREATE
-  UPDATE
-  DELETE
-  LOGIN
-  LOGOUT
 }
 
 model IdReference {
@@ -232,8 +233,8 @@ model ResetPasswordToken {
   id         String   @id @default(uuid())
   token      String   @unique
   expires_at DateTime
-  created_at DateTime @default(now())
   user_id    String   @unique
+  created_at DateTime @default(now())
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
@@ -251,9 +252,21 @@ enum Genre {
 
 enum AgentStatus {
   ativo
-  inativo
+  negado
   agendado
   apto
+}
+
+enum TerminalStatus {
+  em_campo
+  formacao
+  stock
+  avaria
+}
+
+enum LicenceStatus {
+  livre
+  em_uso
 }
 
 enum UserRole {
@@ -261,4 +274,18 @@ enum UserRole {
   super_admin
   area_manager
   supervisor
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+}
+
+enum AuditEntity {
+  pos
+  user
+  agent
+  licence
+  terminal
 }

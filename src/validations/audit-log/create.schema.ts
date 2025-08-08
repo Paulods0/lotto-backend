@@ -1,22 +1,23 @@
 import z from 'zod';
 
-const auditEntity = z.enum(['AGENT', 'TERMINAL', 'POS', 'LICENCE', 'USER']);
-const auditActionEnum = z.enum(['UPDATE', 'CREATE', 'DELETE', 'LOGIN', 'LOGOUT']);
+const auditActionEnum = z.enum(['update', 'create', 'delete']);
+const auditEntity = z.enum(['agent', 'terminal', 'pos', 'licence', 'user']);
 
-const changeLog = z.object({
-  before: z.record(z.string(), z.any()).nullable(),
-  after: z.record(z.string(), z.any()).nullable(),
+export type AuditActionType = z.infer<typeof auditActionEnum>;
+export type AuditEntityType = z.infer<typeof auditEntity>;
+
+const auditLogchanges = z.object({
+  before: z.record(z.string(), z.any()).nullable().optional(),
+  after: z.record(z.string(), z.any()).nullable().optional(),
 });
 
 export const createAuditLogSchema = z.object({
   entity: auditEntity,
-  entity_id: z.uuid().optional(),
-  user_id: z.uuid().optional(),
   user_name: z.string(),
+  user_email: z.email(),
   action: auditActionEnum,
-  metadata: z.json().optional(),
-  changes: changeLog.optional(),
+  changes: auditLogchanges,
 });
 
-export type ChangeLog = z.infer<typeof changeLog>;
+export type AuditLogChanges = z.infer<typeof auditLogchanges>;
 export type CreateAuditLogDTO = z.infer<typeof createAuditLogSchema>;

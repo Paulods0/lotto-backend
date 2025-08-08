@@ -1,37 +1,33 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
 import { AuthPayload } from '../../@types/auth-payload';
-import { createAuditLog } from '../audit-log/create.service';
 import { deleteCache } from '../../utils/redis/delete-cache';
 
 export async function deleteLicence(id: string, user: AuthPayload) {
-  const licence = await prisma.licence.findUnique({
-    where: { id },
-    select: { id: true },
-  });
+  await prisma.$transaction(async tx => {
+    const licence = await tx.licence.findUnique({
+      where: { id },
+    });
 
-  if (!licence) throw new NotFoundError('Licença não encontrada');
+    if (!licence) throw new NotFoundError('Licença não encontrada');
 
-  await prisma.$transaction(async (tx) => {
     await tx.licence.delete({ where: { id } });
 
-    const { id: licenceID, ...data } = licence;
-
-    await createAuditLog(tx, {
-      action: 'DELETE',
-      entity: 'LICENCE',
-      user_name: user.name,
-      metadata: data,
-      user_id: user.id,
-      entity_id: id,
+    await audit(tx, 'delete', {
+      user,
+      entity: 'licence',
+      before: licence,
+      after: null,
     });
   });
 
   await Promise.all([
-    await deleteCache(RedisKeys.licences.all()),
-    await deleteCache(RedisKeys.auditLogs.all()),
-    await deleteCache(RedisKeys.admins.all()),
+    deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.admins.all()),
+    deleteCache(RedisKeys.licences.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
   ]);
 
   return id;

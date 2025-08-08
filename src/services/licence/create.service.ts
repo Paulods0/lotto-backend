@@ -1,23 +1,23 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
-import { createAuditLog } from '../audit-log/create.service';
 import { deleteCache } from '../../utils/redis/delete-cache';
 import { connectIfDefined } from '../../utils/connect-disconnect';
 import { CreateLicenceDTO } from '../../validations/licence/create.schema';
 
-export async function createLicence({ user, ...data }: CreateLicenceDTO) {
-  if (data.admin_id) {
+export async function createLicence(input: CreateLicenceDTO) {
+  const { user, ...data } = input;
+
+  await prisma.$transaction(async tx => {
     const admin = await prisma.administration.findUnique({
       where: { id: data.admin_id },
       select: { name: true },
     });
 
     if (!admin) throw new NotFoundError('A administração não foi encontrada');
-  }
 
-  await prisma.$transaction(async (tx) => {
-    const { id, created_at, ...licence } = await tx.licence.create({
+    const { id, created_at, ...created } = await tx.licence.create({
       data: {
         file: data.file,
         limit: data.limit,
@@ -30,15 +30,18 @@ export async function createLicence({ user, ...data }: CreateLicenceDTO) {
       },
     });
 
-    await createAuditLog(tx, {
-      action: 'CREATE',
-      entity: 'LICENCE',
-      user_name: user.name,
-      metadata: licence as Record<string, any>,
-      user_id: user.id,
-      entity_id: id,
+    await audit(tx, 'create', {
+      user,
+      entity: 'licence',
+      before: null,
+      after: created,
     });
   });
 
-  await Promise.all([await deleteCache(RedisKeys.licences.all()), await deleteCache(RedisKeys.auditLogs.all())]);
+  await Promise.all([
+    deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.admins.all()),
+    deleteCache(RedisKeys.licences.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
+  ]);
 }

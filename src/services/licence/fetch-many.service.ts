@@ -1,5 +1,5 @@
 import prisma from '../../lib/prisma';
-import { Prisma } from '@prisma/client';
+import { LicenceStatus, Prisma } from '@prisma/client';
 import { RedisKeys } from '../../utils/redis/keys';
 import { setCache } from '../../utils/redis/set-cache';
 import { getCache } from '../../utils/redis/get-cache';
@@ -56,9 +56,34 @@ export async function fetchManyLicences({ limit, page, query = '', admin_id }: P
 function buildFilters(query: string): Prisma.LicenceWhereInput[] {
   const filters: Prisma.LicenceWhereInput[] = [];
 
+  console.log('Status :', query);
+
   filters.push({ description: { contains: query, mode: 'insensitive' } });
   filters.push({ number: { contains: query, mode: 'insensitive' } });
   filters.push({ reference: { contains: query, mode: 'insensitive' } });
+  filters.push({ coordinates: { contains: query, mode: 'insensitive' } });
+
+  const lowerQuery = query.toLowerCase();
+
+  if (Object.values(LicenceStatus).includes(query.toLowerCase() as LicenceStatus)) {
+    filters.push({
+      status: { equals: query.toLowerCase() as LicenceStatus },
+    });
+  }
+
+  const parsedDate = new Date(query);
+  if (!isNaN(parsedDate.getTime())) {
+    const start = new Date(parsedDate);
+    const end = new Date(parsedDate);
+    end.setDate(end.getDate() + 1);
+
+    filters.push({
+      created_at: {
+        gte: start,
+        lt: end,
+      },
+    });
+  }
 
   return filters;
 }
