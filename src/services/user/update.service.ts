@@ -1,9 +1,8 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { deleteCache } from '../../utils/redis/delete-cache';
-import { diffObjects } from '../../utils/diff-objects';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
-import { createAuditLog } from '../audit-log/create.service';
+import { deleteCache } from '../../utils/redis/delete-cache';
 import { UpdateUserDTO } from '../../validations/user/update.schema';
 
 export async function updateUser({ user, ...data }: UpdateUserDTO) {
@@ -11,7 +10,7 @@ export async function updateUser({ user, ...data }: UpdateUserDTO) {
 
   if (!existingUser) throw new NotFoundError('Usuário não encontrado.');
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     const updatedUser = await prisma.user.update({
       where: { id: data.id },
       data: {
@@ -22,13 +21,11 @@ export async function updateUser({ user, ...data }: UpdateUserDTO) {
       },
     });
 
-    await createAuditLog(tx, {
-      action: 'UPDATE',
-      entity: 'USER',
-      user_name: user.name,
-      changes: diffObjects(existingUser, updatedUser),
-      user_id: user.id,
-      entity_id: existingUser.id,
+    await audit(tx, 'update', {
+      entity: 'user',
+      user,
+      before: existingUser,
+      after: updatedUser,
     });
   });
 

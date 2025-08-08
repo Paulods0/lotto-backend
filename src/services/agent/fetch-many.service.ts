@@ -20,7 +20,6 @@ export async function fetchManyAgents(params: PaginationParams & { status?: Agen
     ...(params.area_id && { area_id: params.area_id }),
     ...(params.zone_id && { zone_id: params.zone_id }),
     ...(params.province_id && { province_id: params.province_id }),
-    ...(params.status && { status: { equals: params.status as AgentStatus } }),
   };
 
   const offset = (params.page - 1) * params.limit;

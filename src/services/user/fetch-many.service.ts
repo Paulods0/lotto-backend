@@ -1,31 +1,28 @@
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
-import { getCache } from '../../utils/redis/get-cache';
 import { RedisKeys } from '../../utils/redis/keys';
-import { PaginationParams } from '../../@types/pagination-params';
+import { getCache } from '../../utils/redis/get-cache';
 import { setCache } from '../../utils/redis/set-cache';
+import { PaginationParams } from '../../@types/pagination-params';
 
-export async function fetchManyUsers({ limit, page, query }: PaginationParams) {
-  const cacheKey = RedisKeys.users.listWithFilters({
-    page,
-    limit,
-    query: 'none',
-  });
+export async function fetchManyUsers(params: PaginationParams) {
+  const cacheKey = RedisKeys.users.listWithFilters(params);
 
   const cached = await getCache(cacheKey);
+
   if (cached) return cached;
 
-  const search = buildUserFilter(query);
+  const search = buildFilters(params.query);
 
   let where: Prisma.UserWhereInput | undefined = {
     AND: [{ OR: search }, { role: { in: ['area_manager', 'dev', 'super_admin', 'supervisor'] } }],
   };
 
-  const offset = (page - 1) * limit;
+  const offset = (params.page - 1) * params.limit;
 
   const users = await prisma.user.findMany({
     where,
-    take: limit,
+    take: params.limit,
     skip: offset,
     orderBy: { created_at: 'asc' },
   });
@@ -35,12 +32,14 @@ export async function fetchManyUsers({ limit, page, query }: PaginationParams) {
   return users;
 }
 
-function buildUserFilter(query: string | undefined) {
+function buildFilters(query: string | undefined) {
   let filters: Prisma.UserWhereInput[] = [];
-  if (query) {
-    filters.push({ first_name: { contains: query, mode: 'insensitive' } });
-    filters.push({ last_name: { contains: query, mode: 'insensitive' } });
-    filters.push({ email: { contains: query, mode: 'insensitive' } });
-  }
+
+  if (!query) return filters;
+
+  filters.push({ email: { contains: query, mode: 'insensitive' } });
+  filters.push({ last_name: { contains: query, mode: 'insensitive' } });
+  filters.push({ first_name: { contains: query, mode: 'insensitive' } });
+
   return filters;
 }

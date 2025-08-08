@@ -1,9 +1,9 @@
 import bcrypt from 'bcrypt';
 import prisma from '../../lib/prisma';
 import { ConflictError } from '../../errors';
-import { deleteCache } from '../../utils/redis/delete-cache';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
-import { createAuditLog } from '../audit-log/create.service';
+import { deleteCache } from '../../utils/redis/delete-cache';
 import { CreateUserDTO } from '../../validations/user/create.schema';
 
 export async function createUser({ user, ...data }: CreateUserDTO) {
@@ -27,14 +27,12 @@ export async function createUser({ user, ...data }: CreateUserDTO) {
 
     const { id, created_at, password, ...rest } = newUser;
 
-    // await createAuditLog(tx, {
-    //   action: 'CREATE',
-    //   entity: 'USER',
-    //   user_name: user.name,
-    //   entity_id: newUser.id,
-    //   user_id: user.id,
-    //   metadata: rest,
-    // });
+    await audit(tx, 'create', {
+      entity: 'user',
+      user,
+      before: null,
+      after: newUser,
+    });
   });
 
   await deleteCache(RedisKeys.users.all());

@@ -1,27 +1,27 @@
 import prisma from '../../lib/prisma';
 import { NotFoundError } from '../../errors';
-import { deleteCache } from '../../utils/redis/delete-cache';
+import { audit } from '../../utils/audit-log';
 import { RedisKeys } from '../../utils/redis/keys';
 import { AuthPayload } from '../../@types/auth-payload';
-import { createAuditLog } from '../audit-log/create.service';
+import { deleteCache } from '../../utils/redis/delete-cache';
 
 export async function deleteUser(id: string, user: AuthPayload) {
-  const existingUser = await prisma.user.findUnique({ where: { id } });
+  await prisma.$transaction(async tx => {
+    const existingUser = await tx.user.findUnique({ where: { id } });
 
-  if (!existingUser) throw new NotFoundError('Usuário não econtrado.');
+    if (!existingUser) throw new NotFoundError('Usuário não econtrado.');
 
-  await prisma.$transaction(async (tx) => {
-    await prisma.user.delete({
+    await tx.user.delete({
       where: { id },
     });
+
     const { id: userId, created_at, password, ...rest } = existingUser;
-    await createAuditLog(tx, {
-      action: 'DELETE',
-      entity: 'USER',
-      user_name: user.name,
-      entity_id: existingUser.id,
-      user_id: user.id,
-      metadata: rest,
+
+    await audit(tx, 'delete', {
+      entity: 'user',
+      user,
+      after: null,
+      before: rest,
     });
   });
 
