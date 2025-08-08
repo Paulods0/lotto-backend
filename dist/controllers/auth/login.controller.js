@@ -9,8 +9,8 @@ async function handle(req, res) {
     const { accessToken, refreshToken } = await (0, login_service_1.login)(body);
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: true,
+        sameSite: 'none',
         path: '/',
         maxAge: date_1.oneDayFromNowInMs,
     });

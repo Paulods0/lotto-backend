@@ -34,5 +34,5 @@ async function createUser({ user, ...data }) {
             after: newUser,
         });
     });
-    await (0, delete_cache_1.deleteCache)(keys_1.RedisKeys.users.all());
+    await Promise.all([(0, delete_cache_1.deleteCache)(keys_1.RedisKeys.users.all()), (0, delete_cache_1.deleteCache)(keys_1.RedisKeys.auditLogs.all())]);
 }

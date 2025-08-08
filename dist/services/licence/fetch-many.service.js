@@ -5,30 +5,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchManyLicences = fetchManyLicences;
 const prisma_1 = __importDefault(require("../../lib/prisma"));
-const client_1 = require("@prisma/client");
 const keys_1 = require("../../utils/redis/keys");
+const client_1 = require("@prisma/client");
 const set_cache_1 = require("../../utils/redis/set-cache");
 const get_cache_1 = require("../../utils/redis/get-cache");
-async function fetchManyLicences({ limit, page, query = '', admin_id }) {
-    const cacheKey = keys_1.RedisKeys.licences.listWithFilters({
-        page,
-        limit,
-        admin_id,
-        query: query || 'none',
-    });
+async function fetchManyLicences(params) {
+    const cacheKey = keys_1.RedisKeys.licences.listWithFilters(params);
     const cached = await (0, get_cache_1.getCache)(cacheKey);
     if (cached)
         return cached;
-    const searchFilters = buildFilters(query);
+    const searchFilters = buildFilters(params.query);
     const where = {
         ...(searchFilters.length ? { OR: searchFilters } : {}),
-        ...(admin_id && { admin_id }),
+        ...(params.admin_id && { admin_id: params.admin_id }),
+        ...(params.status && { status: params.status }),
     };
-    const offset = (page - 1) * limit;
+    const offset = (params.page - 1) * params.limit;
     const licences = await prisma_1.default.licence.findMany({
         where,
         skip: offset,
-        take: limit,
+        take: params.limit,
         orderBy: { created_at: 'asc' },
         select: {
             id: true,
@@ -52,12 +48,10 @@ async function fetchManyLicences({ limit, page, query = '', admin_id }) {
 }
 function buildFilters(query) {
     const filters = [];
-    console.log('Status :', query);
-    filters.push({ description: { contains: query, mode: 'insensitive' } });
     filters.push({ number: { contains: query, mode: 'insensitive' } });
     filters.push({ reference: { contains: query, mode: 'insensitive' } });
     filters.push({ coordinates: { contains: query, mode: 'insensitive' } });
-    const lowerQuery = query.toLowerCase();
+    filters.push({ description: { contains: query, mode: 'insensitive' } });
     if (Object.values(client_1.LicenceStatus).includes(query.toLowerCase())) {
         filters.push({
             status: { equals: query.toLowerCase() },

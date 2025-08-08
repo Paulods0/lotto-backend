@@ -20,7 +20,7 @@ router.use('/auth', auth_router_1.default);
 //refresh token
 router.post('/refresh-token', refresh_token_controller_1.handle);
 // Main routers
-router.use('/users', user_routes_1.default);
+router.use('/users', authenticate_1.authenticate, user_routes_1.default);
 router.use('/pos', authenticate_1.authenticate, pos_routes_1.default);
 router.use('/agents', authenticate_1.authenticate, agent_routes_1.default);
 router.use('/licences', authenticate_1.authenticate, licence_routes_1.default);

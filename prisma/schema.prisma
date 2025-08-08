@@ -262,7 +262,7 @@ enum TerminalStatus {
   formacao
   stock
   avaria
-  manuntencao
+  manutencao
 }
 
 enum LicenceStatus {

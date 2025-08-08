@@ -9,6 +9,6 @@ const user_1 = require("../../@types/user");
 const create_schema_1 = require("./create.schema");
 exports.updateLicenceSchema = create_schema_1.createLicenceSchema.partial().extend({
     id: zod_1.default.uuid(),
-    admin_id: zod_1.default.number().optional(),
+    admin_id: zod_1.default.coerce.number().optional(),
     user: user_1.currentUserSchema,
 });

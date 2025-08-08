@@ -18,8 +18,8 @@ async function deleteTerminal(id, user) {
         await (0, audit_log_1.audit)(tx, 'delete', {
             entity: 'terminal',
             user,
-            before: null,
-            after: existingTerminal,
+            before: existingTerminal,
+            after: null,
         });
     });
     await Promise.all([
