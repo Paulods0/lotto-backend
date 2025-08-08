@@ -29,5 +29,5 @@ export async function updateUser({ user, ...data }: UpdateUserDTO) {
     });
   });
 
-  await deleteCache(RedisKeys.users.all());
+  await Promise.all([deleteCache(RedisKeys.users.all()), deleteCache(RedisKeys.auditLogs.all())]);
 }

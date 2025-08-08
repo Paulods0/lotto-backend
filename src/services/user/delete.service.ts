@@ -25,5 +25,5 @@ export async function deleteUser(id: string, user: AuthPayload) {
     });
   });
 
-  await deleteCache(RedisKeys.users.all());
+  await Promise.all([deleteCache(RedisKeys.users.all()), deleteCache(RedisKeys.auditLogs.all())]);
 }

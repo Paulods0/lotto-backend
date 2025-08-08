@@ -1,7 +1,7 @@
 import z from 'zod';
 import { currentUserSchema } from '../../@types/user';
 
-const terminalStatus = z.enum(['stock', 'avaria', 'em_campo', 'formacao']);
+const terminalStatus = z.enum(['stock', 'avaria', 'em_campo', 'formacao', 'manutencao']);
 export const terminalStatusArray = terminalStatus.options;
 export type TerminalStatusEnum = z.infer<typeof terminalStatus>;
 

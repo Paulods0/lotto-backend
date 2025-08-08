@@ -62,6 +62,11 @@ export async function fetchManyAgents(params: PaginationParams) {
           zone: true,
           type: true,
           subtype: true,
+          licence: {
+            select: {
+              reference: true,
+            },
+          },
         },
       },
     },

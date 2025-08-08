@@ -16,8 +16,8 @@ export async function deleteTerminal(id: string, user: AuthPayload) {
     await audit(tx, 'delete', {
       entity: 'terminal',
       user,
-      before: null,
-      after: existingTerminal,
+      before: existingTerminal,
+      after: null,
     });
   });
 

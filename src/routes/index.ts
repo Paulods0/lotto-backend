@@ -19,7 +19,7 @@ router.use('/auth', authRouter);
 router.post('/refresh-token', refreshTokenController);
 
 // Main routers
-router.use('/users', userRouter);
+router.use('/users', authenticate, userRouter);
 router.use('/pos', authenticate, posRouter);
 router.use('/agents', authenticate, agentRouter);
 router.use('/licences', authenticate, licenceRouter);

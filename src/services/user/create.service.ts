@@ -34,6 +34,5 @@ export async function createUser({ user, ...data }: CreateUserDTO) {
       after: newUser,
     });
   });
-
-  await deleteCache(RedisKeys.users.all());
+  await Promise.all([deleteCache(RedisKeys.users.all()), deleteCache(RedisKeys.auditLogs.all())]);
 }
