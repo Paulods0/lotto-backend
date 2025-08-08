@@ -1,10 +1,10 @@
 import z from 'zod';
-import { agentStatus } from '../agent/create.schema';
 
 export const paramsSchema = z.object({
   page: z.coerce.number().optional().default(1),
   limit: z.coerce.number().optional().default(30),
   query: z.string().trim().optional().default(''),
+  status: z.string().trim().optional().default(''),
   type_id: z.coerce.number().optional(),
   subtype_id: z.coerce.number().optional(),
   city_id: z.coerce.number().optional(),
@@ -13,6 +13,7 @@ export const paramsSchema = z.object({
   zone_id: z.coerce.number().optional(),
   province_id: z.coerce.number().optional(),
   agent_id: z.string().optional(),
+  delivery_date: z.string().optional(),
   coordinates: z.string().optional(),
 });
 

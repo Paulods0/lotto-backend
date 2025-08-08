@@ -10,6 +10,8 @@ export const RedisKeys = {
         limit,
         page,
         query,
+        status,
+        delivery_date,
         area_id = 'all',
         zone_id = 'all',
         city_id = 'all',
@@ -17,7 +19,7 @@ export const RedisKeys = {
         province_id = 'all',
       } = params;
 
-      return `terminals:${limit}:page:${page}:query:${query}:area:${area_id}:zone:${zone_id}:province:${province_id}:city:${city_id}:agent:${agent_id}`;
+      return `terminals:${limit}:page:${page}:query:${query}:delivery_date:${delivery_date}:area:status:${status}:${area_id}:zone:${zone_id}:province:${province_id}:city:${city_id}:agent:${agent_id}`;
     },
   },
 

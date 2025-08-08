@@ -4,6 +4,7 @@ import { getCache } from '../../utils/redis/get-cache';
 import { setCache } from '../../utils/redis/set-cache';
 import { Prisma, TerminalStatus } from '@prisma/client';
 import { PaginationParams } from '../../@types/pagination-params';
+import { terminalStatusArray, TerminalStatusEnum } from '../../validations/terminal/create.schema';
 
 export async function fetchManyTerminals(params: PaginationParams) {
   const cacheKey = RedisKeys.terminals.listWithFilters(params);
@@ -13,13 +14,36 @@ export async function fetchManyTerminals(params: PaginationParams) {
 
   const filters = buildFilters(params.query);
 
+  let start: Date | undefined;
+  let end: Date | undefined;
+  let isValidDate: boolean = false;
+
+  if (params.delivery_date) {
+    const parsedDate = new Date(params.delivery_date);
+    isValidDate = !isNaN(parsedDate.getTime());
+
+    if (isValidDate) {
+      start = new Date(parsedDate);
+      end = new Date(parsedDate);
+      end.setDate(end.getDate() + 1);
+    }
+  }
+
   const where: Prisma.TerminalWhereInput = {
-    ...(filters.length > 0 ? { OR: filters } : {}),
+    ...(filters.length > 0 && { OR: filters }),
+
     ...(params.area_id && { area_id: params.area_id }),
     ...(params.zone_id && { zone_id: params.zone_id }),
     ...(params.city_id && { city_id: params.city_id }),
     ...(params.agent_id && { agent_id: params.agent_id }),
     ...(params.province_id && { province_id: params.province_id }),
+    ...(params.status && { status: params.status as TerminalStatus }),
+    ...(isValidDate && {
+      delivery_date: {
+        gte: start,
+        lt: end,
+      },
+    }),
   };
 
   const offset = (params.page - 1) * params.limit;
@@ -63,10 +87,6 @@ function buildFilters(query: string): Prisma.TerminalWhereInput[] {
   filters.push({ serial: { contains: query, mode: 'insensitive' } });
   filters.push({ device_id: { contains: query, mode: 'insensitive' } });
 
-  if (Object.values(TerminalStatus).includes(query as TerminalStatus)) {
-    filters.push({ status: { equals: query as TerminalStatus } });
-  }
-
   if (isNumeric) {
     filters.push(
       { pin: numericQuery },
@@ -74,21 +94,6 @@ function buildFilters(query: string): Prisma.TerminalWhereInput[] {
       { sim_card: numericQuery },
       { id_reference: numericQuery }
     );
-  }
-
-  const parsedDate = new Date(query);
-
-  if (!isNaN(parsedDate.getTime())) {
-    const start = new Date(parsedDate);
-    const end = new Date(parsedDate);
-    end.setDate(end.getDate() + 1);
-
-    filters.push({
-      delivery_date: {
-        gte: start,
-        lt: end,
-      },
-    });
   }
 
   return filters;

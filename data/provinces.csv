@@ -1,19 +1,19 @@
-id,name
-1,Bengo
-2,Benguela
-3,Bié
-4,Cabinda
-5,Cuando Cubango
-6,Cuanza Norte
-7,Cuanza Sul
-8,Cunene
-9,Huambo
-10,Huíla
-11,Luanda
-12,Lunda Norte
-13,Lunda Sul
-14,Malanje
-15,Moxico
-16,Namibe
-17,Uíge
-18,Zaire
+name,id
+Bengo,1
+Benguela,2
+Bié,3
+Cabinda,4
+Cuando Cubango,5
+Cuanza Norte,6
+Cuanza Sul,7
+Cunene,8
+Huambo,9
+Huíla,10
+Luanda,11
+Lunda Norte,12
+Lunda Sul,13
+Malanje,14
+Moxico,15
+Namibe,16
+Uíge,17
+Zaire,18

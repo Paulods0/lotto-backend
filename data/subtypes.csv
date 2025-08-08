@@ -1,7 +1,7 @@
-id, name, type_id
-1, arreiou, 2
-2, kibabo, 2
-3, nossa casa, 2
-4, angomart, 2
-6, bancada, 4
-7, roulote, 4
+name,id,type_id
+Arreiou,1,2
+Kibabo,2,2
+Nossa Casa,3,2
+AngoMart,4,2
+Bancada,5,4
+Roulote,6,4

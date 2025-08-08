@@ -65,7 +65,7 @@ model Terminal {
   sim_card      Int
   device_id     String?
   note          String?
-  delivery_date DateTime
+  delivery_date DateTime?
   status        TerminalStatus? @default(stock)
   created_at    DateTime        @default(now())
 
