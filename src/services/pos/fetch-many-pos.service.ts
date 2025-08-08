@@ -49,6 +49,7 @@ export async function fetchManyPos(params: PaginationParams) {
           id_reference: true,
           first_name: true,
           last_name: true,
+          terminal: { select: { id: true, serial: true } },
         },
       },
     },
