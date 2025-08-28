@@ -1,4 +1,3 @@
-import { ActionType } from '@prisma/client';
 import z from 'zod';
 import { createGroupSchema } from './create.schema';
 
