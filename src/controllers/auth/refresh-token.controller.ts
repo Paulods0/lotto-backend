@@ -8,7 +8,6 @@ export interface JwtPayloadCustom extends JwtPayload {
   first_name: string;
   last_name: string;
   email: string;
-  role: string;
 }
 
 export async function handle(req: Request, res: Response) {
@@ -25,7 +24,6 @@ export async function handle(req: Request, res: Response) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
       },
       env.JWT_ACCESS_TOKEN_SECRET,
       {

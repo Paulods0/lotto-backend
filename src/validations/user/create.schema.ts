@@ -1,10 +1,6 @@
 import z from 'zod';
 import { currentUserSchema } from '../../@types/user';
 
-export const userRoleEnum = z.enum(['dev', 'super_admin', 'area_manager', 'supervisor'], {
-  error: 'A role é obrigatória',
-});
-
 export const createUserSchema = z.object({
   first_name: z.string('O nome é obrigatório.').min(2, 'O nome deve ter no mínimo 2 caractéres.'),
   last_name: z.string('O sobrenome é obrigatório.').min(2, 'O sobrenome deve conter no mínimo 2 caractéres.'),
@@ -15,11 +11,9 @@ export const createUserSchema = z.object({
   password: z
     .string('O palavra-passe é obrigatória.')
     .min(6, 'A palavra-passe deve ter no mínimo 6 dígitos/caractéres'),
-  role: userRoleEnum,
 
   reset_password_token: z.string().optional(),
   user: currentUserSchema,
 });
 
-export type UserRole = z.infer<typeof userRoleEnum>;
 export type CreateUserDTO = z.infer<typeof createUserSchema>;

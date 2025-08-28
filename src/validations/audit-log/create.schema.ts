@@ -1,7 +1,7 @@
 import z from 'zod';
 
 const auditActionEnum = z.enum(['update', 'create', 'delete']);
-const auditEntity = z.enum(['agent', 'terminal', 'pos', 'licence', 'user']);
+const auditEntity = z.enum(['agent', 'terminal', 'pos', 'licence', 'user', 'sim_card']);
 
 export type AuditActionType = z.infer<typeof auditActionEnum>;
 export type AuditEntityType = z.infer<typeof auditEntity>;

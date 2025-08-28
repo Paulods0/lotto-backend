@@ -4,7 +4,6 @@ import { getCache } from '../../utils/redis/get-cache';
 import { setCache } from '../../utils/redis/set-cache';
 import { Prisma, TerminalStatus } from '@prisma/client';
 import { PaginationParams } from '../../@types/pagination-params';
-import { terminalStatusArray, TerminalStatusEnum } from '../../validations/terminal/create.schema';
 
 export async function fetchManyTerminals(params: PaginationParams) {
   const cacheKey = RedisKeys.terminals.listWithFilters(params);
@@ -88,12 +87,7 @@ function buildFilters(query: string): Prisma.TerminalWhereInput[] {
   filters.push({ device_id: { contains: query, mode: 'insensitive' } });
 
   if (isNumeric) {
-    filters.push(
-      { pin: numericQuery },
-      { puk: numericQuery },
-      { sim_card: numericQuery },
-      { id_reference: numericQuery }
-    );
+    filters.push({ id_reference: numericQuery });
   }
 
   return filters;

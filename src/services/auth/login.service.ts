@@ -21,7 +21,6 @@ export async function login(data: loginDTO) {
     name: `${existingUser.first_name} ${existingUser.last_name}`,
     id: existingUser.id,
     email: existingUser.email,
-    role: existingUser.role,
   };
 
   const accessToken = jwt.sign(user, env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '15m' });

@@ -17,7 +17,6 @@ export async function updateUser({ user, ...data }: UpdateUserDTO) {
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
-        role: data.role,
       },
     });
 

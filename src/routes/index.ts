@@ -9,6 +9,8 @@ import auditLogRouter from './audit-log.routes';
 import { authenticate } from '../middleware/auth/authenticate';
 import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from './references.routes';
 import { handle as refreshTokenController } from '../controllers/auth/refresh-token.controller';
+import groupRouter from './group.routes';
+import simCardRouter from './sim-card.routes';
 
 const router = Router();
 
@@ -20,10 +22,12 @@ router.post('/refresh-token', refreshTokenController);
 
 // Main routers
 router.use('/users', authenticate, userRouter);
+router.use('/sim-cards', authenticate, simCardRouter);
 router.use('/pos', authenticate, posRouter);
 router.use('/agents', authenticate, agentRouter);
 router.use('/licences', authenticate, licenceRouter);
 router.use('/terminals', authenticate, terminalRouter);
+router.use('/groups', groupRouter);
 
 // Other routers
 router.use('/admins', authenticate, adminRoutes);

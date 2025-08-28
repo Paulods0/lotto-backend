@@ -41,18 +41,16 @@ export async function createTerminal({ user, ...data }: CreateTerminalDTO) {
     const terminal = await tx.terminal.create({
       data: {
         id_reference,
-        pin: data.pin,
-        puk: data.puk,
         note: data.note,
         serial: data.serial,
         status: data.status,
-        sim_card: data.sim_card,
         device_id: data.device_id,
-        delivery_date: data.delivery_date,
+        arrived_at: data.arrived_at,
         ...connectIfDefined('area', area_id),
         ...connectIfDefined('city', city_id),
         ...connectIfDefined('zone', zone_id),
         ...connectIfDefined('province', province_id),
+        ...connectIfDefined('sim_card', data.sim_card_id),
         ...connectIfDefined('agent', data.agent_id ?? null),
       },
     });

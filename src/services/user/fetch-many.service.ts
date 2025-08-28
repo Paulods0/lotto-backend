@@ -15,7 +15,7 @@ export async function fetchManyUsers(params: PaginationParams) {
   const search = buildFilters(params.query);
 
   let where: Prisma.UserWhereInput | undefined = {
-    AND: [{ OR: search }, { role: { in: ['area_manager', 'dev', 'super_admin', 'supervisor'] } }],
+    AND: [{ OR: search }],
   };
 
   const offset = (params.page - 1) * params.limit;

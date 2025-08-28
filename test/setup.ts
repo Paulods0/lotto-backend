@@ -1,0 +1,66 @@
+import app from '../src';
+import bcrypt from 'bcrypt';
+import request from 'supertest';
+import prisma from '../src/lib/prisma';
+import { randomUUID } from 'node:crypto';
+import { execSync } from 'node:child_process';
+
+export let token: string;
+
+beforeAll(async () => {
+  execSync('yarn prisma migrate deploy', { stdio: 'inherit' });
+});
+
+beforeEach(async () => {
+  await prisma.agent.deleteMany();
+  await prisma.terminal.deleteMany();
+  await prisma.pos.deleteMany();
+  await prisma.licence.deleteMany();
+  await prisma.group.deleteMany();
+  await prisma.userGroup.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.auditLog.deleteMany();
+  await prisma.idReference.deleteMany();
+  await prisma.area.deleteMany();
+  await prisma.zone.deleteMany();
+  await prisma.province.deleteMany();
+  await prisma.city.deleteMany();
+  await prisma.type.deleteMany();
+  await prisma.subtype.deleteMany();
+  await prisma.groupFeaturePermission.deleteMany();
+
+  await prisma.idReference.createMany({
+    data: [
+      {
+        counter: 1000,
+        type: 'revendedor',
+      },
+      {
+        counter: 9000,
+        type: 'lotaria_nacional',
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  const email = `p.luguenda-${randomUUID()}@lotarianacional.co.ao`;
+  const password = await bcrypt.hash('msftsrep0.', 10);
+
+  await prisma.user.create({
+    data: {
+      first_name: 'Paulo',
+      last_name: 'Luguenda',
+      email,
+      password,
+    },
+  });
+
+  const loginRes = await request(app).post('/api/auth/login').send({
+    email,
+    password,
+  });
+
+  token = loginRes.body.accessToken;
+});
+
+afterAll(async () => await prisma.$disconnect());

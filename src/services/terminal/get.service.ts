@@ -12,14 +12,8 @@ export async function getTerminal(id: string) {
 
   const terminal = await prisma.terminal.findUnique({
     where: { id },
-    select: {
-      id: true,
-      id_reference: true,
-      pin: true,
-      puk: true,
-      serial: true,
+    include: {
       sim_card: true,
-      status: true,
       agent: {
         select: {
           id: true,

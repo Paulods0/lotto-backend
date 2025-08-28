@@ -1,5 +1,4 @@
 import z from 'zod';
-import { userRoleEnum } from './create.schema';
 import { currentUserSchema } from '../../@types/user';
 
 export const updateUserSchema = z.object({
@@ -11,18 +10,16 @@ export const updateUserSchema = z.object({
     .optional(),
   email: z
     .email('O email é obrigatório.')
-    .refine((val) => val.includes('@lotarianacional.co.ao'), { error: 'O email deve pertencer à Lotaria Nacional' })
+    .refine(val => val.includes('@lotarianacional.co.ao'), { error: 'O email deve pertencer à Lotaria Nacional' })
     .optional(),
   password: z
     .string('O palavra-passe é obrigatória.')
     .min(6, 'A palavra-passe deve ter no mínimo 6 dígitos/caractéres')
     .optional(),
-  role: userRoleEnum.optional(),
 
   reset_password_token: z.string().optional(),
 
   user: currentUserSchema,
 });
 
-export type UserRole = z.infer<typeof userRoleEnum>;
 export type UpdateUserDTO = z.infer<typeof updateUserSchema>;

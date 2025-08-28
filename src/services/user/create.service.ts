@@ -20,7 +20,6 @@ export async function createUser({ user, ...data }: CreateUserDTO) {
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
-        role: data.role,
         password: hashedPassword,
       },
     });

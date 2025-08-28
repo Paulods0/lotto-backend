@@ -4,7 +4,7 @@ const envSchema = z.object({
   JWT_ACCESS_TOKEN_SECRET: z.string(),
   JWT_REFRESH_TOKEN_SECRET: z.string(),
   JWT_EXPIRES_IN: z.string(),
-  PORT: z.number().default(3333),
+  PORT: z.coerce.number().default(3333),
   DATABASE_URL: z.string(),
   REDIS_URL: z.string().default('redis://localhost:6379'),
 });
