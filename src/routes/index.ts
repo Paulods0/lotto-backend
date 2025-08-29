@@ -1,16 +1,16 @@
 import { Router } from 'express';
 import posRouter from './pos.routes';
 import authRouter from './auth.router';
-import userRouter from './user.routes';
+import userRouter from '../features/user/user.routes';
 import agentRouter from './agent.routes';
 import licenceRouter from './licence.routes';
-import terminalRouter from './terminal.routes';
+import terminalRouter from '../features/terminal/terminal.routes';
 import auditLogRouter from './audit-log.routes';
 import { authenticate } from '../middleware/auth/authenticate';
-import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from './references.routes';
+import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from '../features/references/references.routes';
 import { handle as refreshTokenController } from '../controllers/auth/refresh-token.controller';
 import groupRouter from './group.routes';
-import simCardRouter from './sim-card.routes';
+import simCardRouter from '../features/sim-card/sim-card.routes';
 
 const router = Router();
 
