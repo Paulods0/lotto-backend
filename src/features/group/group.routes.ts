@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import catchErrors from '../utils/catch-errors';
-import { getFeaturesController } from '../controllers/group/get-features.controller';
-import { handle as deleteGroupController } from '../controllers/group/delete.controller';
-import { handle as createGroupController } from '../controllers/group/create.controller';
-import { handle as updateGroupController } from '../controllers/group/update.controller';
-import { handle as fetchManyGroupsController } from '../controllers/group/fetch-many.controller';
+import catchErrors from '../../utils/catch-errors';
+import { createGroupController } from './controllers/create-group.controller';
+import { deleteGroupController } from './controllers/delete-group.controller';
+import { fetchManyGroupsController } from './controllers/fetch-many-groups.controller';
+import { getFeaturesController } from './controllers/get-features.controller';
+import { updateGroupController } from './controllers/update-group.controller';
 
 const groupRouter = Router();
 

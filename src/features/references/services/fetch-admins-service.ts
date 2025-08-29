@@ -3,7 +3,7 @@ import { getCache } from '../../../utils/redis/get-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
 import { setCache } from '../../../utils/redis/set-cache';
 
-export async function fetchManyAdmins() {
+export async function fetchManyAdminsService() {
   const cacheKey = RedisKeys.admins.all();
 
   const cached = await getCache(cacheKey);

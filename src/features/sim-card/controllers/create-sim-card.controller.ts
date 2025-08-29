@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { HttpStatus } from '../../constants/http';
-import { createSimCardService } from '../../services/sim-card/create-sim-card.service';
-import { createSimCardSchema } from '../../validations/sim-card/create-sim-card.schema';
+import { HttpStatus } from '../../../constants/http';
+import { createSimCardSchema } from '../schemas/create-sim-card.schema';
+import { createSimCardService } from '../services';
 
 export async function createSimCardController(req: Request, res: Response) {
   const user = req.user;

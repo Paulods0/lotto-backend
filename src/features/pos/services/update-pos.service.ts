@@ -1,14 +1,14 @@
-import prisma from '../../lib/prisma';
-import { BadRequestError, NotFoundError } from '../../errors';
-import { audit } from '../../utils/audit-log';
-import { RedisKeys } from '../../utils/redis/keys';
-import { deleteCache } from '../../utils/redis/delete-cache';
-import { UpdatePosDTO } from '../../validations/pos/update.schema';
-import { connectOrDisconnect } from '../../utils/connect-disconnect';
 import { Pos, Prisma } from '@prisma/client';
+import { NotFoundError, BadRequestError } from '../../../errors';
+import prisma from '../../../lib/prisma';
+import { audit } from '../../../utils/audit-log';
+import { connectOrDisconnect } from '../../../utils/connect-disconnect';
+import { deleteCache } from '../../../utils/redis/delete-cache';
+import { RedisKeys } from '../../../utils/redis/keys';
+import { UpdatePosDTO } from '../schemas/update.schema';
 
-export async function updatePos({ user, ...data }: UpdatePosDTO) {
-  await prisma.$transaction(async tx => {
+export async function updatePos(data: UpdatePosDTO) {
+  await prisma.$transaction(async (tx) => {
     const pos = await tx.pos.findUnique({ where: { id: data.id } });
 
     if (!pos) throw new NotFoundError('POS não encontrado.');
@@ -124,9 +124,9 @@ export async function updatePos({ user, ...data }: UpdatePosDTO) {
       });
     }
     // Registra no log de auditoria
-    await audit<Pos>(tx, 'update', {
-      user,
-      entity: 'pos',
+    await audit<Pos>(tx, 'UPDATE', {
+      user: data.user,
+      entity: 'POS',
       before: pos,
       after,
     });

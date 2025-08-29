@@ -2,9 +2,9 @@ import type { Request, Response } from 'express';
 import { AuthPayload } from '../../../@types/auth-payload';
 import { HttpStatus } from '../../../constants/http';
 import { buildUserAbillity } from '../../../permissions/build-abillity';
-import { updateAgentSchema } from '../../../validations/agent/update.schema';
-import { idSchema } from '../../../validations/common/id.schema';
+import { idSchema } from '../../../schemas/common/id.schema';
 import { updateAgent } from '../services/update-agent.service';
+import { updateAgentSchema } from '../schemas/update-agent.schema';
 
 export async function updateAgentController(req: Request, res: Response) {
   const user = req.user as AuthPayload;

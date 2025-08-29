@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { fetchManyTypes } from '../services/fetch-types-service';
+import { fetchManyTypesService } from '../services';
 
-export async function handle(_req: Request, res: Response) {
-  const response = await fetchManyTypes();
+export async function fetchTypesController(_req: Request, res: Response) {
+  const response = await fetchManyTypesService();
   return res.status(200).json(response);
 }

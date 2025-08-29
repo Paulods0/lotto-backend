@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 import redis from '../../../lib/redis';
 import { oneDayFromNowInMs } from '../../../utils/date';
 
-export async function fetchManyTypes() {
+export async function fetchManyTypesService() {
   const cacheKey = 'types';
   try {
     const cached = await redis.get(cacheKey);

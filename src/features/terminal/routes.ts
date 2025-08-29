@@ -1,0 +1,19 @@
+import {
+  createTerminalController,
+  deleteTerminalController,
+  fetchManyTerminalsController,
+  getTerminalController,
+  updateTerminalController,
+} from './controllers';
+import { Router } from 'express';
+import catchErrors from '../../utils/catch-errors';
+
+const terminalRouter = Router();
+
+terminalRouter.post('/', catchErrors(createTerminalController));
+terminalRouter.put('/:id', catchErrors(updateTerminalController));
+terminalRouter.delete('/:id', catchErrors(deleteTerminalController));
+terminalRouter.get('/', catchErrors(fetchManyTerminalsController));
+terminalRouter.get('/:id', catchErrors(getTerminalController));
+
+export default terminalRouter;

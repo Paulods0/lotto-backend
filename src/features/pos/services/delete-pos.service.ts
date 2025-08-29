@@ -1,12 +1,12 @@
-import prisma from '../../lib/prisma';
-import { NotFoundError } from '../../errors';
-import { audit } from '../../utils/audit-log';
-import { RedisKeys } from '../../utils/redis/keys';
-import { AuthPayload } from '../../@types/auth-payload';
-import { deleteCache } from '../../utils/redis/delete-cache';
+import { AuthPayload } from '../../../@types/auth-payload';
+import { NotFoundError } from '../../../errors';
+import prisma from '../../../lib/prisma';
+import { audit } from '../../../utils/audit-log';
+import { deleteCache } from '../../../utils/redis/delete-cache';
+import { RedisKeys } from '../../../utils/redis/keys';
 
-export async function deletePos(id: string, user: AuthPayload) {
-  await prisma.$transaction(async tx => {
+export async function deletePosService(id: string, user: AuthPayload) {
+  await prisma.$transaction(async (tx) => {
     const pos = await tx.pos.findUnique({ where: { id } });
     if (!pos) throw new NotFoundError(`O POS não foi encontrado.`);
 
@@ -40,8 +40,8 @@ export async function deletePos(id: string, user: AuthPayload) {
       });
     }
 
-    await audit(tx, 'delete', {
-      entity: 'pos',
+    await audit(tx, 'DELETE', {
+      entity: 'POS',
       user,
       after: null,
       before: pos,

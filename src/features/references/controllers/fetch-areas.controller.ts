@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { fetchManyAreas } from '../services/fetch-areas-service';
+import { fetchManyAreasService } from '../services';
 
-export async function handle(_req: Request, res: Response) {
-  const response = await fetchManyAreas();
+export async function fetchAreasController(_req: Request, res: Response) {
+  const response = await fetchManyAreasService();
   return res.status(200).json(response);
 }

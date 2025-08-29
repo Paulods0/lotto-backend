@@ -1,13 +1,13 @@
-import prisma from '../../lib/prisma';
-import { audit } from '../../utils/audit-log';
-import { RedisKeys } from '../../utils/redis/keys';
-import { deleteCache } from '../../utils/redis/delete-cache';
-import { BadRequestError, NotFoundError } from '../../errors';
-import { connectIfDefined } from '../../utils/connect-disconnect';
-import { CreatePosDTO } from '../../validations/pos/create.schema';
+import { NotFoundError, BadRequestError } from '../../../errors';
+import prisma from '../../../lib/prisma';
+import { audit } from '../../../utils/audit-log';
+import { connectIfDefined } from '../../../utils/connect-disconnect';
+import { deleteCache } from '../../../utils/redis/delete-cache';
+import { RedisKeys } from '../../../utils/redis/keys';
+import { CreatePosDTO } from '../schemas/create-pos.schema';
 
-export async function createPos({ user, ...data }: CreatePosDTO) {
-  await prisma.$transaction(async tx => {
+export async function createPosService({ user, ...data }: CreatePosDTO) {
+  await prisma.$transaction(async (tx) => {
     let id_reference: number | null = null;
 
     if (data.agent_id) {
@@ -71,8 +71,8 @@ export async function createPos({ user, ...data }: CreatePosDTO) {
       },
     });
 
-    await audit(tx, 'create', {
-      entity: 'pos',
+    await audit(tx, 'CREATE', {
+      entity: 'POS',
       user,
       after: pos,
       before: null,

@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { fetchManyProvinces } from '../services/fetch-provinces-service';
+import { fetchManyProvincesService } from '../services';
 
-export async function handle(_req: Request, res: Response) {
-  const response = await fetchManyProvinces();
+export async function fetchProvincesController(_req: Request, res: Response) {
+  const response = await fetchManyProvincesService();
   return res.status(200).json(response);
 }

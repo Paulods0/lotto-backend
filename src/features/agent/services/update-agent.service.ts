@@ -4,7 +4,7 @@ import { audit } from '../../../utils/audit-log';
 import { connectOrDisconnect } from '../../../utils/connect-disconnect';
 import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
-import { UpdateAgentDTO } from '../../../validations/agent/update.schema';
+import { UpdateAgentDTO } from '../schemas/update-agent.schema';
 
 export async function updateAgent({ user, ...data }: UpdateAgentDTO) {
   await prisma.$transaction(async (tx) => {

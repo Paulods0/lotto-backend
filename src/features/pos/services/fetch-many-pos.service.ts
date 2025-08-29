@@ -1,9 +1,9 @@
-import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
-import { RedisKeys } from '../../utils/redis/keys';
-import { getCache } from '../../utils/redis/get-cache';
-import { setCache } from '../../utils/redis/set-cache';
-import { PaginationParams } from '../../@types/pagination-params';
+import { PaginationParams } from '../../../@types/pagination-params';
+import prisma from '../../../lib/prisma';
+import { getCache } from '../../../utils/redis/get-cache';
+import { RedisKeys } from '../../../utils/redis/keys';
+import { setCache } from '../../../utils/redis/set-cache';
 
 export async function fetchManyPos(params: PaginationParams) {
   const cacheKey = RedisKeys.pos.listWithFilters(params);

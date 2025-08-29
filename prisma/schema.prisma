@@ -223,13 +223,13 @@ model Subtype {
 }
 
 model AuditLog {
-  id         String      @id @default(uuid())
+  id         String   @id @default(uuid())
   entity     Modules
   user_name  String
   user_email String
-  action     AuditAction
+  action     Actions
   changes    Json
-  created_at DateTime    @default(now())
+  created_at DateTime @default(now())
 
   @@map("audit_logs")
 }
@@ -324,12 +324,6 @@ enum UserRole {
   supervisor
 }
 
-enum AuditAction {
-  create
-  update
-  delete
-}
-
 enum Modules {
   POS
   USER
@@ -341,7 +335,7 @@ enum Modules {
 
 enum Actions {
   READ
-  WRITE
+  CREATE
   UPDATE
   DELETE
   EXPORT

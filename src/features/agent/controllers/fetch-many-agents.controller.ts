@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { AuthPayload } from '../../../@types/auth-payload';
 import { HttpStatus } from '../../../constants/http';
 import { buildUserAbillity } from '../../../permissions/build-abillity';
-import { paramsSchema } from '../../../validations/common/query.schema';
+import { paramsSchema } from '../../../schemas/common/query.schema';
 import { fetchManyAgents } from '../services/fetch-many-agents.service';
 
 export async function fetchManyAgentsController(req: Request, res: Response) {

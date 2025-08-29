@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { HttpStatus } from '../../constants/http';
-import redis from '../../lib/redis';
+import { HttpStatus } from '../../../constants/http';
+import redis from '../../../lib/redis';
 
-export async function handle(req: Request, res: Response) {
+export async function logoutController(req: Request, res: Response) {
   res.clearCookie('refreshToken');
 
   const userId = req.user?.id;

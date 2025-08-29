@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 import redis from '../../../lib/redis';
 import { oneDayFromNowInMs } from '../../../utils/date';
 
-export async function fetchManyProvinces() {
+export async function fetchManyProvincesService() {
   const cacheKey = 'provinces';
   try {
     const cached = await redis.get(cacheKey);

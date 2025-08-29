@@ -1,8 +1,8 @@
-import redis from '../../lib/redis';
 import { Request, Response } from 'express';
-import { AuthPayload } from '../../@types/auth-payload';
+import { AuthPayload } from '../../../@types/auth-payload';
+import redis from '../../../lib/redis';
 
-export async function handle(req: Request, res: Response) {
+export async function getProfileController(req: Request, res: Response) {
   const user = req.user as AuthPayload;
 
   const cacheKey = `profile:${user.id}`;

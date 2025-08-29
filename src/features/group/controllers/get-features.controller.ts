@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getFeaturesService } from '../../features/group/services/get-features.services';
+import { getFeaturesService } from '../services/get-features.services';
 
 export async function getFeaturesController(req: Request, res: Response) {
   const response = await getFeaturesService();

@@ -1,12 +1,12 @@
 import type { Request, Response } from 'express';
-import { oneDayFromNowInMs } from '../../utils/date';
-import { login } from '../../services/auth/login.service';
-import { loginSchema } from '../../validations/auth/login.schema';
+import { oneDayFromNowInMs } from '../../../utils/date';
+import { loginSchema } from '../schemas/login.schema';
+import { loginService } from '../services/login.service';
 
-export async function handle(req: Request, res: Response) {
+export async function loginController(req: Request, res: Response) {
   const body = loginSchema.parse(req.body);
 
-  const { accessToken, refreshToken } = await login(body);
+  const { accessToken, refreshToken } = await loginService(body);
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,

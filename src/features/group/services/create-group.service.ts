@@ -1,3 +1,3 @@
-import { CreateGroupDTO } from '../../../validations/group/create.schema';
+import { CreateGroupDTO } from '../schemas/create.schema';
 
 export async function createGroupService(data: CreateGroupDTO) {}

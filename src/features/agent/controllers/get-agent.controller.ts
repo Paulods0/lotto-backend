@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { AuthPayload } from '../../../@types/auth-payload';
 import { HttpStatus } from '../../../constants/http';
 import { buildUserAbillity } from '../../../permissions/build-abillity';
-import { idSchema } from '../../../validations/common/id.schema';
+import { idSchema } from '../../../schemas/common/id.schema';
 import { getAgent } from '../services/get-agent.service';
 
 export async function getAgentController(req: Request, res: Response) {

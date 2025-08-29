@@ -3,7 +3,7 @@ import { audit } from '../../../utils/audit-log';
 import { connectIfDefined } from '../../../utils/connect-disconnect';
 import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
-import { CreateAgentDTO } from '../../../validations/agent/create.schema';
+import { CreateAgentDTO } from '../schemas/create-agent.schema';
 
 export async function createAgent({ user, ...data }: CreateAgentDTO) {
   await prisma.$transaction(async (tx) => {

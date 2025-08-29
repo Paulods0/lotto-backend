@@ -1,12 +1,12 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import env from '../../constants/env';
-import prisma from '../../lib/prisma';
-import { BadRequestError } from '../../errors';
-import { AuthPayload } from '../../@types/auth-payload';
-import { loginDTO } from '../../validations/auth/login.schema';
+import { AuthPayload } from '../../../@types/auth-payload';
+import { BadRequestError } from '../../../errors';
+import prisma from '../../../lib/prisma';
+import { loginDTO } from '../schemas/login.schema';
+import env from '../../../constants/env';
 
-export async function login(data: loginDTO) {
+export async function loginService(data: loginDTO) {
   const existingUser = await prisma.user.findUnique({
     where: { email: data.email },
   });

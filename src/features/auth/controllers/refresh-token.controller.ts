@@ -1,7 +1,7 @@
-import env from '../../constants/env';
 import { Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { JwtDecoded, JwtError } from '../../@types/jwt';
+import { JwtError, JwtDecoded } from '../../../@types/jwt';
+import env from '../../../constants/env';
 
 export interface JwtPayloadCustom extends JwtPayload {
   id: string;
@@ -10,7 +10,7 @@ export interface JwtPayloadCustom extends JwtPayload {
   email: string;
 }
 
-export async function handle(req: Request, res: Response) {
+export async function refreshTokenController(req: Request, res: Response) {
   const token = req.cookies.refreshToken;
 
   if (!token) return res.sendStatus(401);

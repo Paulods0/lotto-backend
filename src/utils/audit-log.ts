@@ -1,17 +1,18 @@
 import { Prisma } from '@prisma/client';
 import { AuthPayload } from '../@types/auth-payload';
-import { AuditActionType, AuditEntityType } from '../validations/audit-log/create.schema';
-import { createAuditLog } from '../services/audit-log/create.service';
+import { TModule } from '../schemas/modules';
+import { TAction } from '../schemas/actions';
+import { createAuditLogService } from '../features/audit-log/services/create-audit-log.service';
 
 type AuditOptions<T> = {
-  entity: AuditEntityType;
+  entity: TModule;
   user: AuthPayload;
   before?: T | null;
   after?: T | null;
 };
 
-export async function audit<T>(tx: Prisma.TransactionClient, action: AuditActionType, options: AuditOptions<T>) {
-  await createAuditLog(tx, {
+export async function audit<T>(tx: Prisma.TransactionClient, action: TAction, options: AuditOptions<T>) {
+  await createAuditLogService(tx, {
     action,
     entity: options.entity,
     user_name: options.user.name,

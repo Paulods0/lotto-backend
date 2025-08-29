@@ -1,9 +1,9 @@
-import prisma from '../../lib/prisma';
-import { audit } from '../../utils/audit-log';
-import { CreateSimCardDTO } from '../../validations/sim-card/create-sim-card.schema';
+import prisma from '../../../lib/prisma';
+import { audit } from '../../../utils/audit-log';
+import { CreateSimCardDTO } from '../schemas/create-sim-card.schema';
 
 export async function createSimCardService(input: CreateSimCardDTO) {
-  await prisma.$transaction(async tx => {
+  await prisma.$transaction(async (tx) => {
     const simCard = await tx.simCard.create({
       data: {
         ...input,
@@ -11,8 +11,8 @@ export async function createSimCardService(input: CreateSimCardDTO) {
       },
     });
 
-    await audit(tx, 'create', {
-      entity: 'sim_card',
+    await audit(tx, 'CREATE', {
+      entity: 'SIM_CARD',
       user: input.user,
       after: simCard,
       before: null,

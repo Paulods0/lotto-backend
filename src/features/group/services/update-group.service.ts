@@ -1,3 +1,3 @@
-import { UpdateGroupDTO } from '../../../validations/group/update.schema';
+import { UpdateGroupDTO } from '../schemas/update.schema';
 
-export async function updateGroup(data: UpdateGroupDTO) {}
+export async function updateGroupService(data: UpdateGroupDTO) {}
