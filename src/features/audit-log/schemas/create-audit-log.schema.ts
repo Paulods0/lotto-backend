@@ -1,6 +1,6 @@
 import z from 'zod';
-import { moduleSchema } from '../../../schemas/modules';
-import { actionsSchema } from '../../../schemas/actions';
+import { moduleSchema } from '../../group/@types/modules.t';
+import { actionsSchema } from '../../group/@types/actions.t';
 
 const auditLogchanges = z.object({
   before: z.record(z.string(), z.any()).nullable().optional(),

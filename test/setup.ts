@@ -6,19 +6,21 @@ import { randomUUID } from 'node:crypto';
 import { execSync } from 'node:child_process';
 
 export let token: string;
+export let userId: string;
 
 beforeAll(async () => {
   execSync('yarn prisma migrate deploy', { stdio: 'inherit' });
 });
 
 beforeEach(async () => {
+  await prisma.membership.deleteMany();
+  await prisma.groupPermission.deleteMany();
+  await prisma.group.deleteMany();
+
   await prisma.agent.deleteMany();
   await prisma.terminal.deleteMany();
   await prisma.pos.deleteMany();
   await prisma.licence.deleteMany();
-  await prisma.group.deleteMany();
-  await prisma.userGroup.deleteMany();
-  await prisma.user.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.idReference.deleteMany();
   await prisma.area.deleteMany();
@@ -27,8 +29,8 @@ beforeEach(async () => {
   await prisma.city.deleteMany();
   await prisma.type.deleteMany();
   await prisma.subtype.deleteMany();
-  await prisma.groupFeaturePermission.deleteMany();
 
+  await prisma.user.deleteMany();
   await prisma.idReference.createMany({
     data: [
       {
@@ -44,16 +46,20 @@ beforeEach(async () => {
   });
 
   const email = `p.luguenda-${randomUUID()}@lotarianacional.co.ao`;
-  const password = await bcrypt.hash('msftsrep0.', 10);
+  const password = 'msftsrep0.';
+  const hashed = await bcrypt.hash(password, 10);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       first_name: 'Paulo',
       last_name: 'Luguenda',
       email,
-      password,
+      role: 'dev',
+      password: hashed,
     },
   });
+
+  userId = user.id;
 
   const loginRes = await request(app).post('/api/auth/login').send({
     email,

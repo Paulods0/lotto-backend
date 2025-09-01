@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { AuthPayload } from '../@types/auth-payload';
-import { TModule } from '../schemas/modules';
-import { TAction } from '../schemas/actions';
+import { TModule } from '../features/group/@types/modules.t';
+import { TAction } from '../features/group/@types/actions.t';
 import { createAuditLogService } from '../features/audit-log/services/create-audit-log.service';
 
 type AuditOptions<T> = {

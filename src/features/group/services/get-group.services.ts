@@ -1,10 +1,9 @@
+import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
 
-export async function fetchManyGroupsService() {
-  const groups = await prisma.group.findMany({
-    orderBy: {
-      created_at: 'desc',
-    },
+export async function getGroupService(id: string) {
+  const group = await prisma.group.findUnique({
+    where: { id },
     include: {
       memberships: {
         select: {
@@ -28,5 +27,9 @@ export async function fetchManyGroupsService() {
     },
   });
 
-  return groups;
+  if (!group) {
+    throw new NotFoundError('Grupo não encontrado');
+  }
+
+  return group;
 }

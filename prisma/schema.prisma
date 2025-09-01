@@ -273,6 +273,7 @@ model Membership {
   user  User  @relation(fields: [user_id], references: [id])
 
   @@id([user_id, group_id])
+  @@map("memberships")
 }
 
 model GroupPermission {
@@ -284,6 +285,7 @@ model GroupPermission {
   group Group @relation(fields: [group_id], references: [id])
 
   @@unique([group_id, module])
+  @@map("group_permissions")
 }
 
 enum AgentType {
