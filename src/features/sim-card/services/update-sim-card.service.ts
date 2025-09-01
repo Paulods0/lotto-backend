@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { audit } from '../../../utils/audit-log';
-import { connectOrDisconnect } from '../../../utils/connect-disconnect';
+// import { connectOrDisconnect } from '../../../utils/connect-disconnect';
 import { SimCard } from '../@types/sim-card.t';
 import { UpdateSimCardDTO } from '../schemas/update-sim-card.schema';
 

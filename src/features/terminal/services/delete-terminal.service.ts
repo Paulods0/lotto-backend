@@ -7,16 +7,16 @@ import { RedisKeys } from '../../../utils/redis/keys';
 
 export async function deleteTerminalService(id: string, user: AuthPayload) {
   await prisma.$transaction(async (tx) => {
-    const existingTerminal = await tx.terminal.findUnique({ where: { id } });
+    const terminal = await tx.terminal.findUnique({ where: { id } });
 
-    if (!existingTerminal) throw new NotFoundError('Terminal não encontrado.');
+    if (!terminal) throw new NotFoundError('Terminal não encontrado.');
 
     await tx.terminal.delete({ where: { id } });
 
     await audit(tx, 'DELETE', {
       entity: 'TERMINAL',
       user,
-      before: existingTerminal,
+      before: terminal,
       after: null,
     });
   });

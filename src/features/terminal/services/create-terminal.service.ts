@@ -1,4 +1,3 @@
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
 import { audit } from '../../../utils/audit-log';
 import { connectIfDefined } from '../../../utils/connect-disconnect';
@@ -6,52 +5,15 @@ import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
 import { CreateTerminalDTO } from '../schemas/create-terminal.schema';
 
-export async function createTerminalService({ user, ...data }: CreateTerminalDTO) {
-  await prisma.$transaction(async (tx) => {
-    let id_reference: number | null = null;
-    let area_id: number | null = null;
-    let city_id: number | null = null;
-    let province_id: number | null = null;
-    let zone_id: number | null = null;
-
-    if (data.agent_id) {
-      const agent = await tx.agent.findUnique({ where: { id: data.agent_id } });
-
-      if (!agent) throw new NotFoundError('Agente não encontrado');
-
-      id_reference = agent.id_reference;
-      area_id = agent.area_id ?? null;
-      city_id = agent.city_id ?? null;
-      province_id = agent.province_id ?? null;
-      zone_id = agent.zone_id ?? null;
-
-      await tx.terminal.updateMany({
-        where: { agent_id: agent.id },
-        data: {
-          area_id: null,
-          city_id: null,
-          zone_id: null,
-          agent_id: null,
-          province_id: null,
-          id_reference: null,
-        },
-      });
-    }
-
+export async function createTerminalService({ user, ...data }: CreateTerminalDTO): Promise<{ id: string }> {
+  const response = await prisma.$transaction(async (tx) => {
     const terminal = await tx.terminal.create({
       data: {
-        id_reference,
         note: data.note,
         serial: data.serial,
-        status: data.status,
         device_id: data.device_id,
         arrived_at: data.arrived_at,
-        ...connectIfDefined('area', area_id),
-        ...connectIfDefined('city', city_id),
-        ...connectIfDefined('zone', zone_id),
-        ...connectIfDefined('province', province_id),
         ...connectIfDefined('sim_card', data.sim_card_id),
-        ...connectIfDefined('agent', data.agent_id ?? null),
       },
     });
 
@@ -61,6 +23,8 @@ export async function createTerminalService({ user, ...data }: CreateTerminalDTO
       before: null,
       after: terminal,
     });
+
+    return terminal;
   });
 
   await Promise.all([
@@ -68,4 +32,6 @@ export async function createTerminalService({ user, ...data }: CreateTerminalDTO
     deleteCache(RedisKeys.auditLogs.all()),
     deleteCache(RedisKeys.agents.all()),
   ]);
+
+  return { id: response.id };
 }
