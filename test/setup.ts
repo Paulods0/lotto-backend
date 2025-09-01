@@ -18,6 +18,7 @@ beforeEach(async () => {
   await prisma.group.deleteMany();
 
   await prisma.agent.deleteMany();
+  await prisma.simCard.deleteMany();
   await prisma.terminal.deleteMany();
   await prisma.pos.deleteMany();
   await prisma.licence.deleteMany();

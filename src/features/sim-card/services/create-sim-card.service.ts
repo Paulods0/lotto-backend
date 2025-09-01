@@ -1,23 +1,24 @@
 import prisma from '../../../lib/prisma';
 import { audit } from '../../../utils/audit-log';
+import { connectIfDefined } from '../../../utils/connect-disconnect';
 import { CreateSimCardDTO } from '../schemas/create-sim-card.schema';
 
-export async function createSimCardService(input: CreateSimCardDTO) {
-  await prisma.$transaction(async (tx) => {
+export async function createSimCardService({ user, ...data }: CreateSimCardDTO): Promise<{ id: string }> {
+  return await prisma.$transaction(async (tx) => {
     const simCard = await tx.simCard.create({
       data: {
-        ...input,
-        terminal_id: input.terminal_id,
+        ...data,
+        ...connectIfDefined('terminal_id', data.terminal_id),
       },
     });
 
     await audit(tx, 'CREATE', {
       entity: 'SIM_CARD',
-      user: input.user,
+      user: user,
       after: simCard,
       before: null,
     });
 
-    return simCard.id;
+    return { id: simCard.id };
   });
 }
