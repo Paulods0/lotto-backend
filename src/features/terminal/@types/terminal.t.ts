@@ -13,6 +13,7 @@ export const terminalSchema = z.object({
   status: terminalStatusSchema.default('stock'),
   created_at: z.date(),
   arrived_at: z.date().optional(),
+  leaved_at: z.date().optional(),
 });
 
 export type Terminal = z.infer<typeof terminalSchema>;

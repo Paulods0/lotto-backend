@@ -11,9 +11,9 @@ export async function updateTerminalController(req: Request, res: Response) {
 
   const ability = await buildUserAbillity(user.id);
 
-  if (!ability.can('update', 'Terminals')) {
-    return res.status(HttpStatus.FORBIDDEN).json({ message: 'Você não tem permissão' });
-  }
+  // if (!ability.can('update', 'Terminals')) {
+  //   return res.status(HttpStatus.FORBIDDEN).json({ message: 'Você não tem permissão' });
+  // }
 
   const { id } = idSchema.parse(req.params);
   const body = updateTerminalSchema.parse({ ...req.body, id, user });

@@ -1,8 +1,6 @@
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
-import { getCache } from '../../../utils/redis/get-cache';
-import { RedisKeys } from '../../../utils/redis/keys';
-import { setCache } from '../../../utils/redis/set-cache';
+import { NotFoundError } from '../../../errors';
+import { RedisKeys, getCache, setCache } from '../../../utils/redis/';
 
 export async function getTerminalService(id: string) {
   const cacheKey = RedisKeys.terminals.byId(id);
@@ -25,7 +23,7 @@ export async function getTerminalService(id: string) {
     },
   });
 
-  if (!terminal) throw new NotFoundError('Terminal não encontrado.');
+  if (!terminal) throw new NotFoundError('Terminal não encontrado');
 
   await setCache(cacheKey, terminal);
 

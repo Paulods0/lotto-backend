@@ -66,13 +66,14 @@ model Terminal {
   sim_card     SimCard?
   status       TerminalStatus? @default(stock)
   created_at   DateTime        @default(now())
-  arrived_at   DateTime?
+  arrived_at   DateTime
+  leaved_at    DateTime?
 
   area_id     Int?
   city_id     Int?
   zone_id     Int?
-  province_id Int?
   agent_id    String? @unique
+  province_id Int?
 
   area     Area?     @relation(fields: [area_id], references: [id])
   city     City?     @relation(fields: [city_id], references: [id])

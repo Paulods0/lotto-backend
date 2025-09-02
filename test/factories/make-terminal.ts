@@ -1,11 +1,17 @@
-import { Terminal } from '@prisma/client';
+import { CreateTerminalDTO } from '../../src/features/terminal/schemas/create-terminal.schema';
+import { UpdateTerminalDTO } from '../../src/features/terminal/schemas/update-terminal.schema';
 
-export function makeTerminal(override?: Partial<Terminal>) {
+export function makeTerminal(override?: Partial<CreateTerminalDTO>) {
   return {
-    serial: 'VD2942NDALNF13',
-    sim_card: 941685402,
-    pin: 1234,
-    puk: 1234567,
+    serial: 'serial-number-example',
+    arrived_at: new Date(),
+    device_id: 'device-id-example',
     ...override,
-  } as Terminal;
+  } as CreateTerminalDTO;
+}
+
+export function updateTerminal(override?: Partial<UpdateTerminalDTO>) {
+  return {
+    ...override,
+  };
 }

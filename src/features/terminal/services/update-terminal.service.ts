@@ -1,9 +1,8 @@
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
+import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
-import { connectOrDisconnect } from '../../../utils/connect-disconnect';
-import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
+import { deleteCache } from '../../../utils/redis/delete-cache';
 import { UpdateTerminalDTO } from '../schemas/update-terminal.schema';
 
 export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO) {
@@ -18,10 +17,7 @@ export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO
       where: { id: data.id },
       data: {
         note: data.note,
-        serial: data.serial,
-        device_id: data.device_id,
-        arrived_at: data.arrived_at,
-        ...connectOrDisconnect('sim_card', data.sim_card_id),
+        leaved_at: data.leaved_at,
       },
     });
 

@@ -2,15 +2,11 @@ import z from 'zod';
 import { currentUserSchema } from '../../../@types/user';
 
 export const createTerminalSchema = z.object({
-  id_reference: z.number().int().optional(),
-  device_id: z.string().optional(),
-  serial: z.string({ error: 'O nº de série é obrigatório' }).toUpperCase().min(1, 'O nº de série é obrigatório'),
-  note: z.string().optional(),
+  device_id: z.string('O device id é obrigatório').min(1, 'O device id é obrigatório'),
+  serial: z.string('O nº de série é obrigatório').min(1, 'O nº de série é obrigatório'),
 
-  agent_id: z.uuid().optional(),
-  sim_card_id: z.uuid().optional(),
-
-  arrived_at: z.coerce.date().optional(),
+  // TODO: set arrived_at as not null on database, users should set an arrived date
+  arrived_at: z.coerce.date('A data de entrada é obrigatória'),
   user: currentUserSchema,
 });
 

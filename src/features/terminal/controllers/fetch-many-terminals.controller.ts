@@ -10,9 +10,9 @@ export async function fetchManyTerminalsController(req: Request, res: Response) 
 
   const ability = await buildUserAbillity(user.id);
 
-  if (!ability.can('read', 'Terminals')) {
-    return res.status(HttpStatus.FORBIDDEN).json({ message: 'Você não tem permissão' });
-  }
+  // if (!ability.can('read', 'Terminals')) {
+  //   return res.status(HttpStatus.FORBIDDEN).json({ message: 'Você não tem permissão' });
+  // }
 
   const query = paramsSchema.parse(req.query);
   const response = await fetchManyTerminalsService(query);

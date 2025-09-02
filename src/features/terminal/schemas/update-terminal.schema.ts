@@ -1,9 +1,13 @@
 import z from 'zod';
-import { createTerminalSchema } from './create-terminal.schema';
 import { currentUserSchema } from '../../../@types/user';
 
-export const updateTerminalSchema = createTerminalSchema.partial().extend({
+export const updateTerminalSchema = z.object({
   id: z.uuid(),
+  note: z.string().optional(),
+  agent_id: z.uuid().optional(),
+  sim_card_id: z.uuid().optional(),
+  // TODO: add leaved_at field on database it should be auto-filled
+  leaved_at: z.coerce.date().optional(),
   user: currentUserSchema,
 });
 
