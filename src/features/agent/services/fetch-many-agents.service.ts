@@ -1,9 +1,9 @@
-import { Prisma, AgentStatus } from '@prisma/client';
-import { PaginationParams } from '../../../@types/pagination-params';
 import prisma from '../../../lib/prisma';
-import { getCache } from '../../../utils/redis/get-cache';
+import { Prisma, AgentStatus } from '@prisma/client';
 import { RedisKeys } from '../../../utils/redis/keys';
+import { getCache } from '../../../utils/redis/get-cache';
 import { setCache } from '../../../utils/redis/set-cache';
+import { PaginationParams } from '../../../@types/pagination-params';
 
 export async function fetchManyAgents(params: PaginationParams) {
   const cacheKey = RedisKeys.agents.listWithFilters(params);
@@ -28,48 +28,12 @@ export async function fetchManyAgents(params: PaginationParams) {
     }
   }
 
-  const where: Prisma.AgentWhereInput = {
-    ...(search.length > 0 ? { OR: search } : {}),
-    ...(params.type_id && { type_id: params.type_id }),
-    ...(params.city_id && { city_id: params.city_id }),
-    ...(params.area_id && { area_id: params.area_id }),
-    ...(params.zone_id && { zone_id: params.zone_id }),
-    ...(params.status && { status: params.status as AgentStatus }),
-    ...(params.province_id && { province_id: params.province_id }),
-    training_date: {
-      gte: start,
-      lt: end,
-    },
-  };
-
   const offset = (params.page - 1) * params.limit;
 
   const agents = await prisma.agent.findMany({
-    where,
     take: params.limit,
     skip: offset,
     orderBy: { created_at: 'asc' },
-    include: {
-      terminal: true,
-      area: { select: { id: true, name: true } },
-      zone: { select: { id: true, number: true } },
-      city: { select: { id: true, name: true } },
-      province: { select: { id: true, name: true } },
-      pos: {
-        select: {
-          coordinates: true,
-          area: true,
-          zone: true,
-          type: true,
-          subtype: true,
-          licence: {
-            select: {
-              reference: true,
-            },
-          },
-        },
-      },
-    },
   });
 
   if (agents.length > 0) {

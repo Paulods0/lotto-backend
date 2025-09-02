@@ -1,3 +1,0 @@
-id,id_reference,serial,pin,puk,status,agent_id,created_at,sim_card,area_id,city_id,province_id,zone_id
-79493af0-9480-4171-8f8f-889fd9522617,null,VD12341,4321,7654321,f,null,2025-07-28 09:02:16.083,952366605,null,null,null,null
-dc5bd525-23b9-4ca2-abec-fcb56a464fce,null,VD12341,4321,7654321,f,null,2025-07-28 09:23:02.355,952366605,null,null,null,null

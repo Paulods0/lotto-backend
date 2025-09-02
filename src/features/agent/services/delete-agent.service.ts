@@ -2,35 +2,35 @@ import prisma from '../../../lib/prisma';
 import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
 import { RedisKeys } from '../../../utils/redis/keys';
+import { AuthPayload } from '../../../@types/auth-payload';
 import { deleteCache } from '../../../utils/redis/delete-cache';
-import { UpdateAgentDTO } from '../schemas/update-agent.schema';
 
-export async function updateAgentService({ user, ...data }: UpdateAgentDTO) {
+export async function deleteAgentService(id: string, user: AuthPayload) {
   await prisma.$transaction(async (tx) => {
     const agent = await tx.agent.findUnique({
       where: {
-        id: data.id,
+        id,
       },
     });
 
     if (!agent) throw new NotFoundError('Agente não encontrado');
 
-    const updatedAgent = await tx.agent.update({
-      where: { id: data.id },
-      data,
+    await tx.agent.delete({
+      where: { id },
     });
 
-    await audit(tx, 'UPDATE', {
+    await audit(tx, 'DELETE', {
+      entity: 'AGENT',
       user,
       before: agent,
-      after: updatedAgent,
-      entity: 'AGENT',
+      after: null,
     });
   });
 
+  // Limpa cache
   await Promise.all([
-    deleteCache(RedisKeys.agents.all()),
     deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.agents.all()),
     deleteCache(RedisKeys.terminals.all()),
     deleteCache(RedisKeys.auditLogs.all()),
   ]);

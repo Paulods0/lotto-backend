@@ -1,13 +1,14 @@
-import { Agent } from '@prisma/client';
+import { CreateAgentDTO } from '../../src/features/agent/schemas/create-agent.schema';
 
-export function makeAgent(override?: Partial<Agent>) {
+export function makeAgent(override?: Partial<CreateAgentDTO>) {
   return {
-    first_name: 'Agent',
-    last_name: 'Lotaria',
-    bi_number: '0123456789LA01',
+    first_name: 'Paulo',
+    last_name: 'Luguenda',
+    bi_number: '0123456789LA10',
     genre: 'masculino',
-    phone_number: 941414141,
-    agent_type: 'lotaria_nacional',
+    type: 'lotaria_nacional',
+    training_date: new Date('2025-08-10'),
+    phone_number: 941685402,
     ...override,
-  } as Agent;
+  } as CreateAgentDTO;
 }

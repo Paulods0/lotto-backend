@@ -34,22 +34,9 @@ model Agent {
   agent_type       AgentType
   bi_number        String?
   status           AgentStatus @default(agendado)
-  area_id          Int?
-  city_id          Int?
-  type_id          Int?
-  zone_id          Int?
-  subtype_id       Int?
-  province_id      Int?
 
   training_date DateTime
   created_at    DateTime @default(now())
-
-  area     Area?     @relation(fields: [area_id], references: [id])
-  city     City?     @relation(fields: [city_id], references: [id])
-  type     Type?     @relation(fields: [type_id], references: [id])
-  zone     Zone?     @relation(fields: [zone_id], references: [id])
-  subtype  Subtype?  @relation(fields: [subtype_id], references: [id])
-  province Province? @relation(fields: [province_id], references: [id])
 
   terminal Terminal?
   pos      Pos?
@@ -160,7 +147,6 @@ model Administration {
 model Province {
   name      String     @unique
   id        Int        @id @default(autoincrement())
-  agents    Agent[]
   cities    City[]
   pos       Pos[]
   terminals Terminal[]
@@ -172,7 +158,6 @@ model City {
   name        String     @unique
   id          Int        @id @default(autoincrement())
   province_id Int
-  agents      Agent[]
   province    Province   @relation(fields: [province_id], references: [id])
   pos         Pos[]
   terminals   Terminal[]
@@ -183,7 +168,6 @@ model City {
 model Area {
   name      String     @unique
   id        Int        @id @default(autoincrement())
-  agents    Agent[]
   pos       Pos[]
   terminals Terminal[]
   zones     Zone[]
@@ -195,7 +179,6 @@ model Zone {
   number    Int        @unique
   id        Int        @id @default(autoincrement())
   area_id   Int
-  agents    Agent[]
   pos       Pos[]
   terminals Terminal[]
   area      Area       @relation(fields: [area_id], references: [id])
@@ -206,7 +189,6 @@ model Zone {
 model Type {
   name     String
   id       Int       @id @default(autoincrement())
-  agents   Agent[]
   pos      Pos[]
   subtypes Subtype[]
 
@@ -215,11 +197,10 @@ model Type {
 
 model Subtype {
   name    String
-  id      Int     @id @default(autoincrement())
+  id      Int    @id @default(autoincrement())
   type_id Int
-  agents  Agent[]
   pos     Pos[]
-  type    Type    @relation(fields: [type_id], references: [id])
+  type    Type   @relation(fields: [type_id], references: [id])
 
   @@map("subtypes")
 }

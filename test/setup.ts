@@ -18,6 +18,7 @@ beforeEach(async () => {
   await prisma.groupPermission.deleteMany();
   await prisma.group.deleteMany();
   await prisma.administration.deleteMany();
+  await prisma.idReference.deleteMany();
 
   await prisma.agent.deleteMany();
   await prisma.simCard.deleteMany();
@@ -25,7 +26,6 @@ beforeEach(async () => {
   await prisma.pos.deleteMany();
   await prisma.licence.deleteMany();
   await prisma.auditLog.deleteMany();
-  await prisma.idReference.deleteMany();
   await prisma.area.deleteMany();
   await prisma.zone.deleteMany();
   await prisma.province.deleteMany();
@@ -34,19 +34,6 @@ beforeEach(async () => {
   await prisma.subtype.deleteMany();
 
   await prisma.user.deleteMany();
-  await prisma.idReference.createMany({
-    data: [
-      {
-        counter: 1000,
-        type: 'revendedor',
-      },
-      {
-        counter: 9000,
-        type: 'lotaria_nacional',
-      },
-    ],
-    skipDuplicates: true,
-  });
 
   const email = `p.luguenda-${randomUUID()}@lotarianacional.co.ao`;
   const password = 'msftsrep0.';
@@ -71,6 +58,19 @@ beforeEach(async () => {
   });
 
   adminId = admin.id;
+
+  await prisma.idReference.createMany({
+    data: [
+      {
+        counter: 1000,
+        type: 'revendedor',
+      },
+      {
+        counter: 9000,
+        type: 'lotaria_nacional',
+      },
+    ],
+  });
 
   const loginRes = await request(app).post('/api/auth/login').send({
     email,
