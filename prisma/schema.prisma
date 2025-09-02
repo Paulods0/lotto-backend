@@ -33,7 +33,7 @@ model Agent {
   afrimoney_number Int?
   agent_type       AgentType
   bi_number        String?
-  status           AgentStatus @default(agendado)
+  status           AgentStatus @default(scheduled)
 
   training_date DateTime
   created_at    DateTime @default(now())
@@ -86,29 +86,31 @@ model SimCard {
 }
 
 model Pos {
-  id           String   @id @default(uuid())
-  id_reference Int?     @unique
-  coordinates  String
-  agent_id     String?  @unique
-  licence_id   String?
-  created_at   DateTime @default(now())
-  admin_id     Int?
-  area_id      Int?
-  province_id  Int?
-  subtype_id   Int?
-  type_id      Int?
-  zone_id      Int?
-  city_id      Int?
+  id String @id @default(uuid())
 
-  area     Area?           @relation(fields: [area_id], references: [id])
-  city     City?           @relation(fields: [city_id], references: [id])
-  type     Type?           @relation(fields: [type_id], references: [id])
-  zone     Zone?           @relation(fields: [zone_id], references: [id])
-  admin    Administration? @relation(fields: [admin_id], references: [id])
-  agent    Agent?          @relation(fields: [agent_id], references: [id])
-  subtype  Subtype?        @relation(fields: [subtype_id], references: [id])
-  licence  Licence?        @relation(fields: [licence_id], references: [id])
-  province Province?       @relation(fields: [province_id], references: [id])
+  coordinates String
+  admin_id    Int
+  province_id Int
+  city_id     Int
+  status      PosStatus @default(pending)
+  created_at  DateTime  @default(now())
+
+  area_id    Int?
+  zone_id    Int?
+  type_id    Int?
+  subtype_id Int?
+  licence_id String?
+  agent_id   String? @unique
+
+  area     Area?          @relation(fields: [area_id], references: [id])
+  city     City           @relation(fields: [city_id], references: [id])
+  type     Type?          @relation(fields: [type_id], references: [id])
+  zone     Zone?          @relation(fields: [zone_id], references: [id])
+  subtype  Subtype?       @relation(fields: [subtype_id], references: [id])
+  province Province       @relation(fields: [province_id], references: [id])
+  agent    Agent?         @relation(fields: [agent_id], references: [id])
+  admin    Administration @relation(fields: [admin_id], references: [id])
+  licence  Licence?       @relation(fields: [licence_id], references: [id])
 
   @@map("pos")
 }
@@ -119,7 +121,7 @@ model Licence {
   description String
   reference   String
   limit       Int           @default(1)
-  status      LicenceStatus @default(livre)
+  status      LicenceStatus @default(free)
   emitted_at  DateTime
   expires_at  DateTime
   created_at  DateTime      @default(now())
@@ -277,28 +279,35 @@ enum AgentType {
 }
 
 enum Genre {
-  masculino
-  feminino
+  male
+  female
 }
 
 enum AgentStatus {
-  ativo
-  negado
-  agendado
-  apto
+  active
+  denied
+  scheduled
+  approved
 }
 
 enum TerminalStatus {
-  em_campo
-  formacao
+  active
+  training
   stock
-  avaria
-  manutencao
+  broken
+  maintenance
 }
 
 enum LicenceStatus {
-  livre
-  uso
+  free
+  used
+}
+
+enum PosStatus {
+  pending
+  approved
+  active
+  denied
 }
 
 enum UserRole {

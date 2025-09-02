@@ -1,7 +1,7 @@
 import z from 'zod';
 import { simCardSchema } from '../../sim-card/@types/sim-card.t';
 
-export const terminalStatusSchema = z.enum(['em_campo', 'formacao', 'stock', 'avaria', 'manutencao']);
+export const terminalStatusSchema = z.enum(['active', 'training', 'stock', 'broken', 'maintenance']);
 
 export const terminalSchema = z.object({
   id: z.uuid(),
@@ -10,7 +10,7 @@ export const terminalSchema = z.object({
   serial: z.string(),
   note: z.string().optional(),
   sim_card: simCardSchema.optional(),
-  status: terminalStatusSchema.default('stock'),
+  status: terminalStatusSchema,
   created_at: z.date(),
   arrived_at: z.date().optional(),
   leaved_at: z.date().optional(),

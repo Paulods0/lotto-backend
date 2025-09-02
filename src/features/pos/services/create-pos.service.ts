@@ -1,82 +1,28 @@
-import { NotFoundError, BadRequestError } from '../../../errors';
 import prisma from '../../../lib/prisma';
 import { audit } from '../../../utils/audit-log';
-import { connectIfDefined } from '../../../utils/connect-disconnect';
-import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
 import { CreatePosDTO } from '../schemas/create-pos.schema';
+import { deleteCache } from '../../../utils/redis/delete-cache';
 
 export async function createPosService({ user, ...data }: CreatePosDTO) {
-  await prisma.$transaction(async (tx) => {
-    let id_reference: number | null = null;
-
-    if (data.agent_id) {
-      const agent = await tx.agent.findUnique({ where: { id: data.agent_id } });
-      if (!agent) throw new NotFoundError('Agente não encontrado');
-
-      id_reference = agent.id_reference ?? null;
-
-      if (id_reference) {
-        const existingPos = await tx.pos.findFirst({ where: { id_reference } });
-
-        if (existingPos) {
-          await tx.pos.update({
-            where: { id: existingPos.id },
-            data: { id_reference: null },
-          });
-        }
-      }
-    }
-
-    if (data.licence_id) {
-      const licence = await tx.licence.findUnique({
-        where: { id: data.licence_id },
-        include: { pos: { select: { id: true } } },
-      });
-
-      if (!licence) throw new NotFoundError('Licença não encontrada');
-
-      const posCount = licence.pos.length;
-      const limit = licence.limit;
-
-      if (posCount >= limit) {
-        throw new BadRequestError('Esta licença já está a ser usada');
-      }
-
-      // Marcar licença como 'em_uso' se atingir ou ultrapassar o limite de POS permitidos
-      const limitReached = posCount + 1 >= limit;
-
-      await tx.licence.update({
-        where: { id: licence.id },
-        data: {
-          coordinates: data.coordinates,
-          status: limitReached ? 'em_uso' : 'livre',
-        },
-      });
-    }
-
-    const { id, created_at, ...pos } = await tx.pos.create({
+  const response = await prisma.$transaction(async (tx) => {
+    const posCreated = await tx.pos.create({
       data: {
-        id_reference,
         coordinates: data.coordinates,
-        ...connectIfDefined('area', data.area_id),
-        ...connectIfDefined('type', data.type_id),
-        ...connectIfDefined('subtype', data.subtype_id),
-        ...connectIfDefined('zone', data.zone_id),
-        ...connectIfDefined('city', data.city_id),
-        ...connectIfDefined('admin', data.admin_id),
-        ...connectIfDefined('agent', data.agent_id),
-        ...connectIfDefined('licence', data.licence_id),
-        ...connectIfDefined('province', data.province_id),
+        admin_id: data.admin_id,
+        province_id: data.province_id,
+        city_id: data.city_id,
       },
     });
 
     await audit(tx, 'CREATE', {
       entity: 'POS',
       user,
-      after: pos,
+      after: posCreated,
       before: null,
     });
+
+    return posCreated.id;
   });
 
   const promises = [deleteCache(RedisKeys.pos.all()), deleteCache(RedisKeys.auditLogs.all())];
@@ -86,4 +32,6 @@ export async function createPosService({ user, ...data }: CreatePosDTO) {
   if (data.licence_id) promises.push(deleteCache(RedisKeys.licences.all()));
 
   await Promise.all(promises);
+
+  return response;
 }

@@ -8,6 +8,8 @@ import { execSync } from 'node:child_process';
 export let token: string;
 export let userId: string;
 export let adminId: number;
+export let provinceId: number;
+export let cityId: number;
 
 beforeAll(async () => {
   execSync('yarn prisma migrate deploy', { stdio: 'inherit' });
@@ -17,19 +19,19 @@ beforeEach(async () => {
   await prisma.membership.deleteMany();
   await prisma.groupPermission.deleteMany();
   await prisma.group.deleteMany();
+  await prisma.pos.deleteMany();
+  await prisma.city.deleteMany();
+  await prisma.province.deleteMany();
   await prisma.administration.deleteMany();
   await prisma.idReference.deleteMany();
 
   await prisma.agent.deleteMany();
   await prisma.simCard.deleteMany();
   await prisma.terminal.deleteMany();
-  await prisma.pos.deleteMany();
   await prisma.licence.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.area.deleteMany();
   await prisma.zone.deleteMany();
-  await prisma.province.deleteMany();
-  await prisma.city.deleteMany();
   await prisma.type.deleteMany();
   await prisma.subtype.deleteMany();
 
@@ -71,6 +73,12 @@ beforeEach(async () => {
       },
     ],
   });
+
+  const province = await prisma.province.create({ data: { name: 'Luanda' } });
+  const city = await prisma.city.create({ data: { name: 'Luanda', province_id: province.id } });
+
+  provinceId = province.id;
+  cityId = city.id;
 
   const loginRes = await request(app).post('/api/auth/login').send({
     email,

@@ -1,21 +1,24 @@
 import type { Request, Response } from 'express';
-import { AuthPayload } from '../../../@types/auth-payload';
 import { HttpStatus } from '../../../constants/http';
-import { buildUserAbillity } from '../../../permissions/build-abillity';
+import { getPosService } from '../services/get-pos.service';
+import { AuthPayload } from '../../../@types/auth-payload';
 import { idSchema } from '../../../schemas/common/id.schema';
-import { getPos } from '../services/get-pos.service';
+import { hasPermission } from '../../../middleware/auth/permissions';
 
 export async function getPosController(req: Request, res: Response) {
   const user = req.user as AuthPayload;
 
-  const ability = await buildUserAbillity(user.id);
-
-  if (!ability.can('read', 'Pos')) {
-    return res.status(HttpStatus.FORBIDDEN).json({ message: 'Você não tem permissão' });
-  }
+  // await hasPermission({
+  //   res,
+  //   userId: user.id,
+  //   permission: {
+  //     action: 'READ',
+  //     subject: 'Pos',
+  //   },
+  // });
 
   const { id } = idSchema.parse(req.params);
-  const response = await getPos(id);
+  const response = await getPosService(id);
 
-  return res.status(200).json(response);
+  return res.status(HttpStatus.OK).json(response);
 }

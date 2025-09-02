@@ -1,9 +1,10 @@
 import z from 'zod';
 import { terminalSchema } from '../../terminal/@types/terminal.t';
+import { posSchema } from '../../pos/@types/pos.t';
 
 export const agentType = z.enum(['lotaria_nacional', 'revendedor']);
-export const agentStatus = z.enum(['ativo', 'negado', 'agendado', 'apto']);
-export const genre = z.enum(['masculino', 'feminino']);
+export const agentStatus = z.enum(['active', 'denied', 'scheduled', 'approved']);
+export const genre = z.enum(['male', 'female']);
 
 export const agentSchema = z.object({
   id: z.uuid(),
@@ -19,9 +20,7 @@ export const agentSchema = z.object({
   training_date: z.date(),
   created_at: z.date(),
   terminal: terminalSchema,
-
-  // TODO: implement pos-schema
-  //   pos: posSchema,
+  pos: posSchema,
 });
 
 export type Agent = z.infer<typeof agentSchema>;

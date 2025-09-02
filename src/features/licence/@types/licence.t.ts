@@ -1,6 +1,6 @@
 import z from 'zod';
 
-export const licenceStatus = z.enum(['livre', 'uso']);
+export const licenceStatus = z.enum(['free', 'used']);
 
 export const licence = z.object({
   id: z.uuid(),

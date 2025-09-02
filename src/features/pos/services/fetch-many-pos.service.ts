@@ -1,9 +1,7 @@
 import { Prisma } from '@prisma/client';
-import { PaginationParams } from '../../../@types/pagination-params';
 import prisma from '../../../lib/prisma';
-import { getCache } from '../../../utils/redis/get-cache';
-import { RedisKeys } from '../../../utils/redis/keys';
-import { setCache } from '../../../utils/redis/set-cache';
+import { PaginationParams } from '../../../@types/pagination-params';
+import { setCache, RedisKeys, getCache } from '../../../utils/redis';
 
 export async function fetchManyPos(params: PaginationParams) {
   const cacheKey = RedisKeys.pos.listWithFilters(params);
@@ -11,37 +9,13 @@ export async function fetchManyPos(params: PaginationParams) {
   const cached = await getCache(cacheKey);
   if (cached) return cached;
 
-  const filters = buildFilters(params.query);
-
-  const where: Prisma.PosWhereInput = {
-    ...(filters?.length ? { OR: filters } : {}),
-    ...(params.type_id && { type_id: params.type_id }),
-    ...(params.city_id && { city_id: params.city_id }),
-    ...(params.area_id && { area_id: params.area_id }),
-    ...(params.zone_id && { zone_id: params.zone_id }),
-    ...(params.subtype_id && { type_id: params.subtype_id }),
-    ...(params.subtype_id && { subtype_id: params.subtype_id }),
-    ...(params.province_id && { province_id: params.province_id }),
-  };
-
   const offset = (params.page - 1) * params.limit;
 
   const pos = await prisma.pos.findMany({
-    where,
     skip: offset,
     take: params.limit,
     orderBy: { created_at: 'asc' },
-    select: {
-      id: true,
-      id_reference: true,
-      coordinates: true,
-      type: true,
-      subtype: true,
-      admin: true,
-      province: true,
-      area: true,
-      zone: true,
-      city: true,
+    include: {
       licence: true,
       agent: {
         select: {
@@ -73,8 +47,12 @@ function buildFilters(query: string | undefined) {
   });
 
   if (!isNaN(numericQuery)) {
-    filters.push({ id_reference: numericQuery });
-  }
+    filters.push({
+      agent: {
+        id_reference: numericQuery,
+      },
+    });
 
-  return filters;
+    return filters;
+  }
 }

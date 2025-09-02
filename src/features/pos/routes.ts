@@ -15,8 +15,9 @@ posRouter.post('/', catchErrors(createPosController));
 posRouter.put('/:id', catchErrors(updatePosController));
 posRouter.delete('/:id', catchErrors(deletePosController));
 
-posRouter.get('/bounds', catchErrors(fetchBoundedPosController));
-posRouter.get('/', catchErrors(fetchManyPosController));
 posRouter.get('/:id', catchErrors(getPosController));
+posRouter.get('/', catchErrors(fetchManyPosController));
+
+posRouter.get('/bounds', catchErrors(fetchBoundedPosController));
 
 export default posRouter;
