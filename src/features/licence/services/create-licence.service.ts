@@ -1,15 +1,13 @@
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
+import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
-import { connectIfDefined } from '../../../utils/connect-disconnect';
-import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
+import { deleteCache } from '../../../utils/redis/delete-cache';
+import { connectIfDefined } from '../../../utils/connect-disconnect';
 import { CreateLicenceDTO } from '../schemas/create-licence.schema';
 
-export async function createLicence(input: CreateLicenceDTO) {
-  const { user, ...data } = input;
-
-  await prisma.$transaction(async (tx) => {
+export async function createLicenceService(data: CreateLicenceDTO) {
+  const id = await prisma.$transaction(async (tx) => {
     const admin = await prisma.administration.findUnique({
       where: { id: data.admin_id },
       select: { name: true },
@@ -17,25 +15,29 @@ export async function createLicence(input: CreateLicenceDTO) {
 
     if (!admin) throw new NotFoundError('A administração não foi encontrada');
 
-    const { id, created_at, ...created } = await tx.licence.create({
+    const { reference } = makeLicenceReference(data, admin.name);
+
+    const licenceCreated = await tx.licence.create({
       data: {
+        reference,
+        number: data.number,
+        description: data.description,
+        emitted_at: data.emitted_at,
+        expires_at: data.expires_at,
         file: data.file,
         limit: data.limit,
-        number: data.number,
-        reference: data.reference,
-        description: data.description,
-        expires_at: data.expires_at,
-        creation_date: data.creation_date,
         ...connectIfDefined('admin', data.admin_id),
       },
     });
 
     await audit(tx, 'CREATE', {
-      user,
+      user: data.user,
       entity: 'LICENCE',
       before: null,
-      after: created,
+      after: licenceCreated,
     });
+
+    return licenceCreated.id;
   });
 
   await Promise.all([
@@ -44,4 +46,14 @@ export async function createLicence(input: CreateLicenceDTO) {
     deleteCache(RedisKeys.licences.all()),
     deleteCache(RedisKeys.auditLogs.all()),
   ]);
+
+  return { id };
 }
+
+export const makeLicenceReference = (data: Partial<CreateLicenceDTO>, admin: string) => {
+  const { emitted_at, number, description } = data;
+  const emitted_at_year = emitted_at?.getFullYear();
+
+  const reference = `${admin}-N${number}-PT${description}-${emitted_at_year}`.toUpperCase();
+  return { reference };
+};

@@ -3,7 +3,7 @@ import { makeSimCard } from '../factories/make-sim-card';
 import app from '../../src';
 import { token } from '../setup';
 
-describe('E2E - Group', () => {
+describe('E2E - SimCards', () => {
   it('should be able to create a simCard and fetch it', async () => {
     const simCard = makeSimCard();
 
@@ -13,7 +13,6 @@ describe('E2E - Group', () => {
     const simCardId = res.body.id;
     const getRes = await request(app).get(`/api/sim-cards/${simCardId}`).set('authorization', `Bearer ${token}`);
 
-    console.log('SIM-CARDS: ', JSON.stringify(getRes.body, null, 2));
     expect(getRes.status).toBe(200);
   });
 
@@ -39,8 +38,6 @@ describe('E2E - Group', () => {
     expect(updatedRes.status).toBe(200);
 
     const getRes = await request(app).get(`/api/sim-cards/${simCardId}`).set('authorization', `Bearer ${token}`);
-
-    console.log('SIM-CARDS: ', JSON.stringify(getRes.body, null, 2));
 
     expect(getRes.status).toBe(200);
     expect(getRes.body.pin).toBe(9999);

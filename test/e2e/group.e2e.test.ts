@@ -11,14 +11,10 @@ describe('E2E - Group', () => {
 
     const res = await request(app).post('/api/groups').set('authorization', `Bearer ${token}`).send(group);
 
-    console.log('RESPONSE: ', res.body.id);
-
     expect(res.status).toBe(201);
 
     const groupId = res.body.id;
     const getRes = await request(app).get(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`);
-
-    console.log('GROUP: ', JSON.stringify(getRes.body, null, 2));
 
     expect(getRes.status).toBe(200);
   });
@@ -45,8 +41,6 @@ describe('E2E - Group', () => {
 
     await request(app).put(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`).send(updatedGroup);
     const getRes = await request(app).get(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`);
-
-    console.log(JSON.stringify(getRes.body, null, 2));
 
     expect(getRes.status).toBe(200);
     expect(getRes.body.name).toBe('Updated group name');

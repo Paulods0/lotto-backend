@@ -1,17 +1,15 @@
+import prisma from '../../../lib/prisma';
 import { Prisma, LicenceStatus } from '@prisma/client';
 import { PaginationParams } from '../../../@types/pagination-params';
-import prisma from '../../../lib/prisma';
-import { getCache } from '../../../utils/redis/get-cache';
-import { RedisKeys } from '../../../utils/redis/keys';
-import { setCache } from '../../../utils/redis/set-cache';
+import { getCache, RedisKeys, setCache } from '../../../utils/redis';
 
-export async function fetchManyLicences(params: PaginationParams) {
+export async function fetchManyLicencesService(params: PaginationParams) {
   const cacheKey = RedisKeys.licences.listWithFilters(params);
 
   const cached = await getCache(cacheKey);
   if (cached) return cached;
 
-  const searchFilters = buildFilters(params.query);
+  const searchFilters = makeLicenceFilters(params.query);
 
   const where: Prisma.LicenceWhereInput = {
     ...(searchFilters.length ? { OR: searchFilters } : {}),
@@ -25,21 +23,9 @@ export async function fetchManyLicences(params: PaginationParams) {
     where,
     skip: offset,
     take: params.limit,
-    orderBy: { created_at: 'asc' },
-    select: {
-      id: true,
-      number: true,
-      description: true,
-      reference: true,
-      limit: true,
-      status: true,
-      coordinates: true,
-      admin_id: true,
-      creation_date: true,
-      expires_at: true,
-      created_at: true,
-      admin: { select: { id: true, name: true } },
-    },
+    orderBy: { emitted_at: 'desc' },
+    include: { admin: { select: { id: true, name: true } } },
+    omit: { admin_id: true },
   });
 
   if (licences.length > 0) {
@@ -49,7 +35,8 @@ export async function fetchManyLicences(params: PaginationParams) {
   return licences;
 }
 
-function buildFilters(query: string): Prisma.LicenceWhereInput[] {
+// make licence filters function
+export const makeLicenceFilters = (query: string): Prisma.LicenceWhereInput[] => {
   const filters: Prisma.LicenceWhereInput[] = [];
 
   filters.push({ number: { contains: query, mode: 'insensitive' } });
@@ -70,7 +57,7 @@ function buildFilters(query: string): Prisma.LicenceWhereInput[] {
     end.setDate(end.getDate() + 1);
 
     filters.push({
-      creation_date: {
+      emitted_at: {
         gte: start,
         lt: end,
       },
@@ -78,4 +65,4 @@ function buildFilters(query: string): Prisma.LicenceWhereInput[] {
   }
 
   return filters;
-}
+};

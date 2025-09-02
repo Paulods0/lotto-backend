@@ -1,11 +1,11 @@
-import { AuthPayload } from '../../../@types/auth-payload';
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
+import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
-import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
+import { AuthPayload } from '../../../@types/auth-payload';
+import { deleteCache } from '../../../utils/redis/delete-cache';
 
-export async function deleteLicence(id: string, user: AuthPayload) {
+export async function deleteLicenceService(id: string, user: AuthPayload) {
   await prisma.$transaction(async (tx) => {
     const licence = await tx.licence.findUnique({
       where: { id },
@@ -29,6 +29,4 @@ export async function deleteLicence(id: string, user: AuthPayload) {
     deleteCache(RedisKeys.licences.all()),
     deleteCache(RedisKeys.auditLogs.all()),
   ]);
-
-  return id;
 }

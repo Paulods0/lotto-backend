@@ -127,22 +127,23 @@ model Pos {
 }
 
 model Licence {
-  id            String        @id @default(uuid())
-  number        String
-  description   String
-  file          String?
-  coordinates   String?
-  reference     String
-  limit         Int           @default(1)
-  status        LicenceStatus @default(livre)
-  created_at    DateTime      @default(now())
-  expires_at    DateTime?
-  creation_date DateTime?     @default(now())
+  id          String        @id @default(uuid())
+  number      String
+  description String
+  reference   String
+  limit       Int           @default(1)
+  status      LicenceStatus @default(livre)
+  emitted_at  DateTime
+  expires_at  DateTime
+  created_at  DateTime      @default(now())
+
+  file        String?
+  coordinates String?
 
   admin_id Int?
+  admin    Administration? @relation(fields: [admin_id], references: [id])
 
-  admin Administration? @relation(fields: [admin_id], references: [id])
-  pos   Pos[]
+  pos Pos[]
 
   @@map("licences")
 }
@@ -316,7 +317,7 @@ enum TerminalStatus {
 
 enum LicenceStatus {
   livre
-  em_uso
+  uso
 }
 
 enum UserRole {

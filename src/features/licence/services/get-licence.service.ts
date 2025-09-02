@@ -1,10 +1,8 @@
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
-import { getCache } from '../../../utils/redis/get-cache';
-import { RedisKeys } from '../../../utils/redis/keys';
-import { setCache } from '../../../utils/redis/set-cache';
+import { NotFoundError } from '../../../errors';
+import { getCache, RedisKeys, setCache } from '../../../utils/redis';
 
-export async function getLicence(id: string) {
+export async function getLicenceService(id: string) {
   const cacheKey = RedisKeys.licences.byId(id);
   const cached = await getCache(cacheKey);
 
@@ -12,6 +10,8 @@ export async function getLicence(id: string) {
 
   const licence = await prisma.licence.findUnique({
     where: { id },
+    include: { admin: { select: { id: true, name: true } } },
+    omit: { admin_id: true },
   });
 
   if (!licence) throw new NotFoundError('Licença não encontrada');

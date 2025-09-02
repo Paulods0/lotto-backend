@@ -1,7 +1,7 @@
 import { AbilityBuilder, createMongoAbility, MongoAbility } from '@casl/ability';
-import { ActionType } from '@prisma/client';
+import { Action } from '../features/group/@types/actions.t';
 
-export type Actions = ActionType | 'manage';
+export type Actions = Action | 'manage';
 export type Subjects = 'Agents' | 'Terminals' | 'Pos' | 'Licences' | 'Sim Cards' | 'all';
 
 export type AppAbillity = MongoAbility<[Actions, Subjects]>;
