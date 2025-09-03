@@ -1,12 +1,12 @@
-import z from 'zod';
 import type { Request, Response } from 'express';
-import { HttpStatus } from '../../../constants/http';
-import { deleteManyTerminalService } from '../services';
-import { AuthPayload } from '../../../@types/auth-payload';
-import { hasPermission } from '../../../middleware/auth/permissions';
-import { idsSchema } from '../../../schemas/common/id.schema';
 
-export async function deleteManyTerminalsController(req: Request, res: Response) {
+import { deleteManyPosService } from '../services';
+import { HttpStatus } from '../../../constants/http';
+import { AuthPayload } from '../../../@types/auth-payload';
+import { idSchema, idsSchema } from '../../../schemas/common/id.schema';
+import { hasPermission } from '../../../middleware/auth/permissions';
+
+export async function deleteManyPosController(req: Request, res: Response) {
   const user = req.user as AuthPayload;
 
   // await hasPermission({
@@ -14,15 +14,15 @@ export async function deleteManyTerminalsController(req: Request, res: Response)
   //   userId: user.id,
   //   permission: {
   //     action: 'DELETE',
-  //     subject: 'Terminals',
+  //     subject: 'Pos',
   //   },
   // });
 
   const { ids } = idsSchema.parse(req.body);
 
-  await deleteManyTerminalService(ids);
+  await deleteManyPosService(ids, user);
 
   return res.status(HttpStatus.OK).json({
-    message: 'Terminais removidos com sucesso',
+    message: `Pos's removidos com sucesso`,
   });
 }

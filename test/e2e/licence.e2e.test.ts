@@ -22,7 +22,7 @@ describe('E2E - Licence', () => {
     expect(licenceBody.description).toBe('test');
     expect(licenceBody.limit).toBe(3);
     expect(licenceBody.emitted_at).toBe('2025-08-10T00:00:00.000Z');
-    expect(licenceBody.status).toBe('livre');
+    expect(licenceBody.status).toBe('free');
   });
 
   it('should be able to update a licence and fetch it', async () => {

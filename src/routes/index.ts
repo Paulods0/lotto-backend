@@ -5,7 +5,7 @@ import userRouter from '../features/user/routes';
 import authRouter from '../features/auth/auth.router';
 import simCardRouter from '../features/sim-card/routes';
 import licenceRouter from '../features/licence/routes';
-import groupRouter from '../features/group/group.routes';
+import groupRouter from '../features/group/routes';
 import auditLogRouter from '../features/audit-log/routes';
 import { authenticate } from '../middleware/auth/authenticate';
 import terminalRouter from '../features/terminal/routes';

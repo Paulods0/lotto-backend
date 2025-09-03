@@ -5,7 +5,7 @@ export function makeAgent(override?: Partial<CreateAgentDTO>) {
     first_name: 'Paulo',
     last_name: 'Luguenda',
     bi_number: '0123456789LA10',
-    genre: 'masculino',
+    genre: 'male',
     type: 'lotaria_nacional',
     training_date: new Date('2025-08-10'),
     phone_number: 941685402,

@@ -34,6 +34,10 @@ export async function fetchManyAgents(params: PaginationParams) {
     take: params.limit,
     skip: offset,
     orderBy: { created_at: 'asc' },
+    include: {
+      terminal: true,
+      pos: true,
+    },
   });
 
   if (agents.length > 0) {

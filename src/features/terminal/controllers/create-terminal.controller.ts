@@ -17,7 +17,7 @@ export async function createTerminalController(req: Request, res: Response) {
   const body = createTerminalSchema.parse({ ...req.body, user });
   const response = await createTerminalService(body);
 
-  return res.status(201).json({
+  return res.status(HttpStatus.CREATED).json({
     message: 'Terminal criado com sucesso',
     id: response.id,
   });

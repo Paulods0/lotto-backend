@@ -1,18 +1,18 @@
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
-import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
+import { deleteCache } from '../../../utils/redis/delete-cache';
+import { BadRequestError } from '../../../errors';
 
 export async function deleteManyTerminalService(ids: string[]) {
-  const deleted = await prisma.terminal.deleteMany({
-    where: { id: { in: ids } },
+  await prisma.$transaction(async (tx) => {
+    const { count } = await tx.terminal.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    if (count === 0) {
+      throw new BadRequestError('Nenhum terminal foi deletado');
+    }
   });
 
-  if (deleted.count === 0) {
-    throw new NotFoundError('Nenhum terminal encontrado para remover.');
-  }
-
   await Promise.all([deleteCache(RedisKeys.terminals.all()), deleteCache(RedisKeys.agents.all())]);
-
-  return deleted.count;
 }

@@ -1,9 +1,10 @@
 import {
+  getPosController,
   createPosController,
   updatePosController,
   deletePosController,
   fetchManyPosController,
-  getPosController,
+  deleteManyPosController,
   fetchBoundedPosController,
 } from './controllers';
 import { Router } from 'express';
@@ -13,6 +14,8 @@ const posRouter = Router();
 
 posRouter.post('/', catchErrors(createPosController));
 posRouter.put('/:id', catchErrors(updatePosController));
+
+posRouter.delete('/bulk', catchErrors(deleteManyPosController));
 posRouter.delete('/:id', catchErrors(deletePosController));
 
 posRouter.get('/:id', catchErrors(getPosController));

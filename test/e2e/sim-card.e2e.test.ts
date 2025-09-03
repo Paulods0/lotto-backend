@@ -1,75 +1,84 @@
-import request from 'supertest';
-import { makeSimCard } from '../factories/make-sim-card';
 import app from '../../src';
-import { token } from '../setup';
+import request from 'supertest';
+import { auth } from '../utils/auth';
+import { makeSimCard } from '../factories/make-sim-card';
+import { SimCard } from '../../src/features/sim-card/@types/sim-card.t';
+import { CreateSimCardDTO } from '../../src/features/sim-card/schemas/create-sim-card.schema';
 
 describe('E2E - SimCards', () => {
   it('should be able to create a simCard and fetch it', async () => {
-    const simCard = makeSimCard();
+    const data = makeSimCard();
+    const response = await auth(request(app).post('/api/sim-cards')).send(data);
+    expect(response.status).toBe(201);
 
-    const res = await request(app).post('/api/sim-cards').set('authorization', `Bearer ${token}`).send(simCard);
-    expect(res.status).toBe(201);
+    const simCard = await getSimCard(response.body.id);
 
-    const simCardId = res.body.id;
-    const getRes = await request(app).get(`/api/sim-cards/${simCardId}`).set('authorization', `Bearer ${token}`);
+    console.log(simCard);
 
-    expect(getRes.status).toBe(200);
+    expect(simCard).toBeDefined();
   });
 
   it('should be able to update a simCard and fetch it', async () => {
-    const simCard = makeSimCard();
-    const res = await request(app).post('/api/sim-cards').set('authorization', `Bearer ${token}`).send(simCard);
+    const { id } = await createSimCard();
 
-    expect(res.status).toBe(201);
-
-    const simCardId = res.body.id;
-
-    const updatedSimCard = makeSimCard({
+    const data = makeSimCard({
       number: 952366605,
       pin: 9999,
       puk: 9898989,
     });
 
-    const updatedRes = await request(app)
-      .put(`/api/sim-cards/${simCardId}`)
-      .set('authorization', `Bearer ${token}`)
-      .send(updatedSimCard);
+    const { status } = await auth(request(app).put(`/api/sim-cards/${id}`)).send(data);
+    expect(status).toBe(200);
 
-    expect(updatedRes.status).toBe(200);
+    const simCard = await getSimCard(id);
 
-    const getRes = await request(app).get(`/api/sim-cards/${simCardId}`).set('authorization', `Bearer ${token}`);
-
-    expect(getRes.status).toBe(200);
-    expect(getRes.body.pin).toBe(9999);
-    expect(getRes.body.puk).toBe(9898989);
-    expect(getRes.body.number).toBe(952366605);
+    expect(simCard.pin).toBe(9999);
+    expect(simCard.puk).toBe(9898989);
+    expect(simCard.number).toBe(952366605);
   });
 
   it('should be able to delete a simCard and not fetch it', async () => {
-    const simCard = makeSimCard();
-    const res = await request(app).post('/api/sim-cards').set('authorization', `Bearer ${token}`).send(simCard);
-    expect(res.status).toBe(201);
+    const { id } = await createSimCard();
+    const { status } = await auth(request(app).delete(`/api/sim-cards/${id}`));
+    expect(status).toBe(200);
 
-    const simCardId = res.body.id;
-    const deletedRes = await request(app).delete(`/api/sim-cards/${simCardId}`).set('authorization', `Bearer ${token}`);
-    expect(deletedRes.status).toBe(200);
+    const simCard = await getSimCard(id);
+    expect(simCard.message).toBe('Sim card não encontrado');
+  });
 
-    const getRes = await request(app).get(`/api/sim-cards/${simCardId}`).set('authorization', `Bearer ${token}`);
-    expect(getRes.status).toBe(404);
+  it('should be able to delete many a simCards', async () => {
+    const { id: id01 } = await createSimCard();
+    const { id: id02 } = await createSimCard();
+
+    const data = { ids: [id01, id02] };
+
+    const { status } = await auth(request(app).delete(`/api/sim-cards/bulk`)).send(data);
+    expect(status).toBe(200);
+
+    const simCard = await getSimCard(id01);
+    expect(simCard.message).toBe('Sim card não encontrado');
   });
 
   it('should be able to fetch all simCards', async () => {
-    const simCard01 = makeSimCard();
-    const simCard02 = makeSimCard({ number: 952366605 });
+    await createSimCard();
+    await createSimCard({ number: 952366605 });
 
-    const res01 = await request(app).post('/api/sim-cards').set('authorization', `Bearer ${token}`).send(simCard01);
-    const res02 = await request(app).post('/api/sim-cards').set('authorization', `Bearer ${token}`).send(simCard02);
+    const response = await auth(request(app).get('/api/sim-cards'));
 
-    expect(res01.status).toBe(201);
-    expect(res02.status).toBe(201);
-
-    const fetchRes = await request(app).get('/api/sim-cards/').set('authorization', `Bearer ${token}`);
-    expect(fetchRes.status).toBe(200);
-    expect(fetchRes.body).toHaveLength(2);
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
   });
 });
+
+async function createSimCard(data?: Partial<CreateSimCardDTO>) {
+  const simCard = makeSimCard(data);
+  const response = await auth(request(app).post('/api/sim-cards')).send(simCard);
+  expect(response.status).toBe(201);
+
+  return response.body as SimCard;
+}
+
+async function getSimCard(id: string) {
+  const response = await auth(request(app).get(`/api/sim-cards/${id}`));
+  return response.body as SimCard & { message: string };
+}

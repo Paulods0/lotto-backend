@@ -17,10 +17,10 @@ describe('E2E - Agent', () => {
 
     expect(getRes.status).toBe(200);
 
-    expect(agentBody.status).toBe('agendado');
+    expect(agentBody.status).toBe('scheduled');
     expect(agentBody.first_name).toBe('Paulo');
     expect(agentBody.last_name).toBe('Luguenda');
-    expect(agentBody.genre).toBe('masculino');
+    expect(agentBody.genre).toBe('male');
     expect(agentBody.agent_type).toBe('lotaria_nacional');
     expect(agentBody.phone_number).toBe(941685402);
     expect(agentBody.afrimoney_number).toBe(null);
@@ -36,7 +36,7 @@ describe('E2E - Agent', () => {
       first_name: 'Sebastião',
       last_name: 'Simão',
       bi_number: '88888888LA88',
-      genre: 'feminino',
+      genre: 'female',
       phone_number: 929375582,
       training_date: new Date('2025-11-12'),
     });
@@ -55,8 +55,8 @@ describe('E2E - Agent', () => {
     expect(agentBody.first_name).toBe('Sebastião');
     expect(agentBody.last_name).toBe('Simão');
     expect(agentBody.bi_number).toBe('88888888LA88');
-    expect(agentBody.genre).toBe('feminino');
-    expect(agentBody.status).toBe('agendado');
+    expect(agentBody.genre).toBe('female');
+    expect(agentBody.status).toBe('scheduled');
     expect(agentBody.agent_type).toBe('lotaria_nacional');
   });
 

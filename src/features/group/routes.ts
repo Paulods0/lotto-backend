@@ -1,6 +1,7 @@
 import {
   createGroupController,
   deleteGroupController,
+  deleteManyGroupsController,
   fetchManyGroupsController,
   getGroupsController,
   updateGroupController,
@@ -12,7 +13,10 @@ const groupRouter = Router();
 
 groupRouter.post('/', catchErrors(createGroupController));
 groupRouter.put('/:id', catchErrors(updateGroupController));
+
+groupRouter.delete('/bulk', catchErrors(deleteManyGroupsController));
 groupRouter.delete('/:id', catchErrors(deleteGroupController));
+
 groupRouter.get('/:id', catchErrors(getGroupsController));
 groupRouter.get('/', catchErrors(fetchManyGroupsController));
 

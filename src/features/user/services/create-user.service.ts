@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
-import { ConflictError } from '../../../errors';
 import prisma from '../../../lib/prisma';
+import { ConflictError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
-import { deleteCache } from '../../../utils/redis/delete-cache';
 import { RedisKeys } from '../../../utils/redis/keys';
 import { CreateUserDTO } from '../schemas/create-user.schema';
+import { deleteCache } from '../../../utils/redis/delete-cache';
 
 export async function createUserService({ user, ...data }: CreateUserDTO) {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
@@ -15,7 +15,7 @@ export async function createUserService({ user, ...data }: CreateUserDTO) {
   const hashedPassword = await bcrypt.hash(data.password, salt);
 
   await prisma.$transaction(async (tx) => {
-    const newUser = await tx.user.create({
+    const userCreated = await tx.user.create({
       data: {
         first_name: data.first_name,
         last_name: data.last_name,
@@ -24,14 +24,13 @@ export async function createUserService({ user, ...data }: CreateUserDTO) {
       },
     });
 
-    const { id, created_at, password, ...rest } = newUser;
-
     await audit(tx, 'CREATE', {
       entity: 'USER',
       user,
       before: null,
-      after: newUser,
+      after: userCreated,
     });
   });
+
   await Promise.all([deleteCache(RedisKeys.users.all()), deleteCache(RedisKeys.auditLogs.all())]);
 }

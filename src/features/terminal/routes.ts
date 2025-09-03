@@ -1,5 +1,6 @@
 import {
   createTerminalController,
+  deleteManyTerminalsController,
   deleteTerminalController,
   fetchManyTerminalsController,
   getTerminalController,
@@ -12,6 +13,7 @@ const terminalRouter = Router();
 
 terminalRouter.post('/', catchErrors(createTerminalController));
 terminalRouter.put('/:id', catchErrors(updateTerminalController));
+terminalRouter.delete('/bulk', catchErrors(deleteManyTerminalsController));
 terminalRouter.delete('/:id', catchErrors(deleteTerminalController));
 terminalRouter.get('/', catchErrors(fetchManyTerminalsController));
 terminalRouter.get('/:id', catchErrors(getTerminalController));

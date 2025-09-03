@@ -1,3 +1,3 @@
-import { validate as isUUID } from "uuid"
+import { validate as isUUID } from 'uuid';
 
-export default isUUID
+export default isUUID;

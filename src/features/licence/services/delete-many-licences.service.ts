@@ -4,9 +4,9 @@ import { BadRequestError } from '../../../errors';
 import { AuthPayload } from '../../../@types/auth-payload';
 import { deleteCache, RedisKeys } from '../../../utils/redis';
 
-export async function deleteManyUsersService(ids: string[], user: AuthPayload) {
+export async function deleteManyLicencesService(ids: string[], user: AuthPayload) {
   await prisma.$transaction(async (tx) => {
-    const { count } = await tx.user.deleteMany({
+    const { count } = await tx.licence.deleteMany({
       where: {
         id: {
           in: ids,
@@ -15,16 +15,21 @@ export async function deleteManyUsersService(ids: string[], user: AuthPayload) {
     });
 
     if (count === 0) {
-      throw new BadRequestError('Nenhum usuário foi removido');
+      throw new BadRequestError('As licenças não foram removidas');
     }
 
     await audit(tx, 'DELETE', {
-      entity: 'USER',
       user,
-      after: null,
+      entity: 'LICENCE',
       before: null,
+      after: null,
     });
   });
 
-  await Promise.all([deleteCache(RedisKeys.users.all()), deleteCache(RedisKeys.auditLogs.all())]);
+  await Promise.all([
+    deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.admins.all()),
+    deleteCache(RedisKeys.licences.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
+  ]);
 }
