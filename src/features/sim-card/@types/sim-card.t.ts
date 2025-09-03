@@ -1,4 +1,5 @@
 import z from 'zod';
+import { Terminal, terminalSchema } from '../../terminal/@types/terminal.t';
 
 export const simCardSchema = z.object({
   id: z.string(),
@@ -8,4 +9,4 @@ export const simCardSchema = z.object({
   created_at: z.date(),
 });
 
-export type SimCard = z.infer<typeof simCardSchema>;
+export type SimCard = z.infer<typeof simCardSchema> & { terminal: Terminal };

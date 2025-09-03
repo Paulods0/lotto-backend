@@ -5,6 +5,7 @@ export const updateAgentSchema = createAgentSchema
   .partial()
   .extend({
     id: z.uuid(),
+    afrimoney_number: z.coerce.number().optional(),
   })
   .omit({ type: true })
   .required({ user: true });

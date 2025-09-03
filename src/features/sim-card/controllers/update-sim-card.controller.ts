@@ -12,5 +12,5 @@ export async function updateSimCardController(req: Request, res: Response) {
 
   const response = await updateSimCardService(body);
 
-  return res.status(HttpStatus.OK).json({ messsage: 'Sim card atualizado com sucesso', id: response.id });
+  return res.status(HttpStatus.OK).json({ messsage: 'Sim card atualizado com sucesso' });
 }

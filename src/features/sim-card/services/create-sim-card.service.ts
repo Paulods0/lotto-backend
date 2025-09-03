@@ -3,8 +3,8 @@ import { audit } from '../../../utils/audit-log';
 import { connectIfDefined } from '../../../utils/connect-disconnect';
 import { CreateSimCardDTO } from '../schemas/create-sim-card.schema';
 
-export async function createSimCardService({ user, ...data }: CreateSimCardDTO): Promise<{ id: string }> {
-  return await prisma.$transaction(async (tx) => {
+export async function createSimCardService({ user, ...data }: CreateSimCardDTO) {
+  const { id } = await prisma.$transaction(async (tx) => {
     const simCard = await tx.simCard.create({
       data: {
         ...data,
@@ -18,7 +18,8 @@ export async function createSimCardService({ user, ...data }: CreateSimCardDTO):
       after: simCard,
       before: null,
     });
-
-    return { id: simCard.id };
+    return simCard;
   });
+
+  return { id };
 }

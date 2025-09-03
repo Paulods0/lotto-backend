@@ -67,7 +67,7 @@ describe('E2E - Pos', () => {
   });
 });
 
-async function createPos(data?: Partial<CreatePosDTO>) {
+export async function createPos(data?: Partial<CreatePosDTO>) {
   const pos = makePos(data);
   const response = await auth(request(app).post('/api/pos')).send(pos);
   expect(response.status).toBe(201);
@@ -75,7 +75,7 @@ async function createPos(data?: Partial<CreatePosDTO>) {
   return response.body as Pos;
 }
 
-async function getPos(id: string) {
+export async function getPos(id: string) {
   const response = await auth(request(app).get(`/api/pos/${id}`));
   return response.body as Pos & { message: string };
 }

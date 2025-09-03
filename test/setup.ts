@@ -81,20 +81,6 @@ async function createUserSeed() {
 
   return { user };
 }
-// async function createAgentSeed() {
-//   const data = makeAgent();
-
-//   const agent = await prisma.agent.create({
-//     data: {
-//       ...data,
-//       agent_type: data.type,
-//     },
-//   });
-
-//   agentId = agent.id;
-
-//   return { agent };
-// }
 
 async function createIdReferenceSeed() {
   const { count } = await prisma.idReference.createMany({

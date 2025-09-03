@@ -38,8 +38,6 @@ describe('E2E - Terminal', () => {
 
     const terminal = await getTerminal(terminalId);
 
-    console.log(terminal);
-
     expect(terminal.id).toBe(terminalId);
     expect(terminal.note).toBe('terminal-note-example');
     expect(terminal.device_id).toBe('device-id-example');
@@ -86,7 +84,7 @@ describe('E2E - Terminal', () => {
   });
 });
 
-async function createTerminal(data?: Partial<CreateTerminalDTO>) {
+export async function createTerminal(data?: Partial<CreateTerminalDTO>) {
   const terminal = makeTerminal(data);
   const res = await auth(request(app).post('/api/terminals')).send(terminal);
   expect(res.status).toBe(201);
@@ -94,7 +92,7 @@ async function createTerminal(data?: Partial<CreateTerminalDTO>) {
   return res.body as Terminal;
 }
 
-async function getTerminal(id: string) {
+export async function getTerminal(id: string) {
   const response = await auth(request(app).get(`/api/terminals/${id}`));
   return response.body as Terminal & { message: string };
 }
