@@ -3,7 +3,7 @@ import { membershipSchema } from './membership.t';
 import { groupPermissionSchema } from './group-permission.t';
 
 export const groupSchema = z.object({
-  id: z.uuid().optional(),
+  id: z.uuid(),
   name: z.string(),
   description: z.string().optional(),
   memberships: z.array(membershipSchema),

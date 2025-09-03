@@ -6,7 +6,7 @@ import { currentUserSchema } from '../../../@types/user';
 export const updatePosSchema = createPosSchema.partial().extend({
   id: z.uuid(),
   user: currentUserSchema,
-  status: posStatus,
+  status: posStatus.optional(),
   licence_id: z.uuid().nullable().optional(),
 });
 

@@ -2,11 +2,11 @@ import prisma from '../../../lib/prisma';
 
 import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
-import { RedisKeys } from '../../../utils/redis/keys';
 import { UpdatePosDTO } from '../schemas/update.schema';
 import { deleteCache } from '../../../utils/redis/delete-cache';
+import { RedisKeys } from '../../../utils/redis';
 
-export async function updatePos(data: UpdatePosDTO) {
+export async function updatePosService(data: UpdatePosDTO) {
   await prisma.$transaction(async (tx) => {
     const pos = await tx.pos.findUnique({ where: { id: data.id } });
 
@@ -14,7 +14,9 @@ export async function updatePos(data: UpdatePosDTO) {
 
     const after = await tx.pos.update({
       where: { id: data.id },
-      data,
+      data: {
+        coordinates: data.coordinates,
+      },
     });
 
     await audit(tx, 'UPDATE', {

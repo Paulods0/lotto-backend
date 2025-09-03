@@ -2,35 +2,26 @@ import app from '../../src';
 import request from 'supertest';
 import { token, userId } from '../setup';
 import { makeGroup } from '../factories/make-group';
+import { auth } from '../utils/auth';
+import { Group } from '../../src/features/group/@types/group.t';
+import { CreateGroupDTO } from '../../src/features/group/schemas/create.schema';
 
 describe('E2E - Group', () => {
-  it('should be able to create a group and fetch it', async () => {
-    const group = makeGroup({
-      users_id: [userId],
-    });
+  it('should be able to create a group', async () => {
+    const { id } = await createGroup();
+    const group = await getGroup(id);
+    console.log(group);
 
-    const res = await request(app).post('/api/groups').set('authorization', `Bearer ${token}`).send(group);
-
-    expect(res.status).toBe(201);
-
-    const groupId = res.body.id;
-    const getRes = await request(app).get(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`);
-
-    expect(getRes.status).toBe(200);
+    expect(group.name).toBe('Development');
+    expect(group.memberships).toHaveLength(1);
   });
 
-  it('should be able to update a group and fetch it', async () => {
-    const group = makeGroup({
-      users_id: [userId],
-    });
+  it('should be able to update a group', async () => {
+    const { id } = await createGroup();
 
-    const res = await request(app).post('/api/groups').set('authorization', `Bearer ${token}`).send(group);
-    expect(res.status).toBe(201);
-
-    const groupId = res.body.id;
-    const updatedGroup = makeGroup({
-      name: 'Updated group name',
-      description: 'Updated group description',
+    const data = makeGroup({
+      name: 'T.I',
+      description: 'Updated description',
       permissions: [
         {
           module: 'LICENCE',
@@ -39,53 +30,56 @@ describe('E2E - Group', () => {
       ],
     });
 
-    await request(app).put(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`).send(updatedGroup);
-    const getRes = await request(app).get(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`);
+    const { status } = await auth(request(app).put(`/api/groups/${id}`).send(data));
+    const group = await getGroup(id);
 
-    expect(getRes.status).toBe(200);
-    expect(getRes.body.name).toBe('Updated group name');
-    expect(getRes.body.description).toBe('Updated group description');
+    expect(status).toBe(200);
+    expect(group.name).toBe('T.I');
+    expect(group.description).toBe('Updated description');
   });
 
   it('should be able to delete a group', async () => {
-    const group = makeGroup({
-      users_id: [userId],
-    });
+    const { id } = await createGroup();
 
-    const res = await request(app).post('/api/groups').set('authorization', `Bearer ${token}`).send(group);
-    expect(res.status).toBe(201);
+    const { status } = await auth(request(app).delete(`/api/groups/${id}`));
+    expect(status).toBe(200);
 
-    const groupId = res.body.id;
+    const group = await getGroup(id);
 
-    const deleteRes = await request(app).delete(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`);
-    expect(deleteRes.status).toBe(200);
-
-    const getRes = await request(app).get(`/api/groups/${groupId}`).set('authorization', `Bearer ${token}`);
-    expect(getRes.status).toBe(404);
-
-    const fetchRes = await request(app).get('/api/groups/').set('authorization', `Bearer ${token}`);
-    expect(fetchRes.body).toHaveLength(0);
+    expect(group.message).toBe('Grupo não encontrado');
   });
 
   it('should be able to fetch all groups', async () => {
-    const group01 = makeGroup({
-      users_id: [userId],
-    });
+    await Promise.all([
+      createGroup({
+        name: 'Marketing',
+        description: 'Marketing group',
+      }),
+      createGroup({
+        name: 'R.H',
+        description: 'RH group',
+      }),
+    ]);
 
-    const group02 = makeGroup({
-      users_id: [userId],
-    });
+    const response = await auth(request(app).get('/api/groups'));
+    const groupsList: Group[] = response.body;
 
-    const res01 = await request(app).post('/api/groups').set('authorization', `Bearer ${token}`).send(group01);
-    const res02 = await request(app).post('/api/groups').set('authorization', `Bearer ${token}`).send(group02);
-
-    expect(res01.status).toBe(201);
-    expect(res02.status).toBe(201);
-
-    const fetchRes = await request(app).get('/api/groups/').set('authorization', `Bearer ${token}`);
-
-    expect(fetchRes.body).toHaveLength(2);
-    expect(fetchRes.body[0].memberships[0].user.first_name).toBe('Paulo');
-    expect(fetchRes.body[1].memberships[0].user.first_name).toBe('Paulo');
+    expect(response.status).toBe(200);
+    expect(groupsList).toHaveLength(2);
+    expect(groupsList[0].name).toBe('R.H');
+    expect(groupsList[1].name).toBe('Marketing');
   });
 });
+
+async function createGroup(data?: Partial<CreateGroupDTO>) {
+  const group = makeGroup(data);
+  const res = await auth(request(app).post('/api/groups')).send(group);
+  expect(res.status).toBe(201);
+
+  return res.body as Group;
+}
+
+async function getGroup(id: string) {
+  const response = await auth(request(app).get(`/api/groups/${id}`));
+  return response.body as Group & { message: string };
+}

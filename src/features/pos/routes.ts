@@ -18,8 +18,8 @@ posRouter.put('/:id', catchErrors(updatePosController));
 posRouter.delete('/bulk', catchErrors(deleteManyPosController));
 posRouter.delete('/:id', catchErrors(deletePosController));
 
-posRouter.get('/:id', catchErrors(getPosController));
 posRouter.get('/', catchErrors(fetchManyPosController));
+posRouter.get('/:id', catchErrors(getPosController));
 
 posRouter.get('/bounds', catchErrors(fetchBoundedPosController));
 
