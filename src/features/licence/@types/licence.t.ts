@@ -1,4 +1,5 @@
 import z from 'zod';
+import { posSchema } from '../../pos/@types/pos.t';
 
 export const licenceStatus = z.enum(['free', 'used']);
 
@@ -10,6 +11,7 @@ export const licence = z.object({
   admin_id: z.number(),
   status: licenceStatus,
   limit: z.number().int().default(1),
+  pos: z.array(posSchema),
 
   file: z.string().optional(),
   coordinates: z.string().optional(),
@@ -20,7 +22,6 @@ export const licence = z.object({
 
   //TODO: implement administration and POS schemas
   //   admin    Administration
-  //   pos Pos[]
 });
 
 export type Licence = z.infer<typeof licence>;

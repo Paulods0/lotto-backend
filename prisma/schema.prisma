@@ -291,7 +291,7 @@ enum AgentStatus {
 }
 
 enum TerminalStatus {
-  active
+  ready
   training
   stock
   broken

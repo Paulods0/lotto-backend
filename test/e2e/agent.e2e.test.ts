@@ -1,107 +1,103 @@
 import app from '../../src';
 import request from 'supertest';
-import { token } from '../setup';
+import { auth } from '../utils/auth';
 import { makeAgent } from '../factories/make-agent';
 import { Agent } from '../../src/features/agent/@types/agent.t';
+import { CreateAgentDTO } from '../../src/features/agent/schemas/create-agent.schema';
 
 describe('E2E - Agent', () => {
-  it('should be able to create a agent and fetch it', async () => {
-    const agent = makeAgent();
+  it('should be able to create an agent', async () => {
+    const { id } = await createAgent();
+    const agent = await getAgent(id);
 
-    const res = await request(app).post('/api/agents').set('authorization', `Bearer ${token}`).send(agent);
-    expect(res.status).toBe(201);
-
-    const agentId = res.body.id;
-    const getRes = await request(app).get(`/api/agents/${agentId}`).set('authorization', `Bearer ${token}`);
-    const agentBody = getRes.body as Agent;
-
-    expect(getRes.status).toBe(200);
-
-    expect(agentBody.status).toBe('scheduled');
-    expect(agentBody.first_name).toBe('Paulo');
-    expect(agentBody.last_name).toBe('Luguenda');
-    expect(agentBody.genre).toBe('male');
-    expect(agentBody.agent_type).toBe('lotaria_nacional');
-    expect(agentBody.phone_number).toBe(941685402);
-    expect(agentBody.afrimoney_number).toBe(null);
+    expect(agent.status).toBe('scheduled');
+    expect(agent.first_name).toBe('Paulo');
+    expect(agent.last_name).toBe('Luguenda');
+    expect(agent.genre).toBe('male');
+    expect(agent.agent_type).toBe('lotaria_nacional');
+    expect(agent.phone_number).toBe(941685402);
+    expect(agent.afrimoney_number).toBe(null);
   });
 
-  it('should be able to update a agent and fetch it', async () => {
-    const agent = makeAgent();
-    const res = await request(app).post('/api/agents').set('authorization', `Bearer ${token}`).send(agent);
-    expect(res.status).toBe(201);
+  it('should be able to update an agent', async () => {
+    const { id } = await createAgent();
 
-    const agentId = res.body.id;
-    const updatedAgent = makeAgent({
-      first_name: 'Sebastião',
-      last_name: 'Simão',
+    const data = makeAgent({
+      first_name: 'Ana',
+      last_name: 'Silva',
       bi_number: '88888888LA88',
       genre: 'female',
       phone_number: 929375582,
       training_date: new Date('2025-11-12'),
     });
 
-    const updatedRes = await request(app)
-      .put(`/api/agents/${agentId}`)
-      .set('authorization', `Bearer ${token}`)
-      .send(updatedAgent);
-    expect(updatedRes.status).toBe(200);
+    const { status } = await auth(request(app).put(`/api/agents/${id}`)).send(data);
+    expect(status).toBe(200);
 
-    const getRes = await request(app).get(`/api/agents/${agentId}`).set('authorization', `Bearer ${token}`);
-    const agentBody = getRes.body as Agent;
+    const agent = await getAgent(id);
 
-    expect(getRes.status).toBe(200);
-    expect(agentBody.id).toBe(agentId);
-    expect(agentBody.first_name).toBe('Sebastião');
-    expect(agentBody.last_name).toBe('Simão');
-    expect(agentBody.bi_number).toBe('88888888LA88');
-    expect(agentBody.genre).toBe('female');
-    expect(agentBody.status).toBe('scheduled');
-    expect(agentBody.agent_type).toBe('lotaria_nacional');
+    console.log(agent);
+
+    expect(agent.id).toBe(id);
+    expect(agent.first_name).toBe('Ana');
+    expect(agent.last_name).toBe('Silva');
+    expect(agent.bi_number).toBe('88888888LA88');
+    expect(agent.genre).toBe('female');
+    expect(agent.status).toBe('scheduled');
+    expect(agent.agent_type).toBe('lotaria_nacional');
   });
 
-  it('should be able to delete a agent and not fetch it', async () => {
-    const agent = makeAgent();
-    const res = await request(app).post('/api/agents').set('authorization', `Bearer ${token}`).send(agent);
-    expect(res.status).toBe(201);
+  it('should be able to delete a agent', async () => {
+    const { id } = await createAgent();
 
-    const agentId = res.body.id;
+    const { status } = await auth(request(app).delete(`/api/agents/${id}`));
+    expect(status).toBe(200);
 
-    const deletedRes = await request(app).delete(`/api/agents/${agentId}`).set('authorization', `Bearer ${token}`);
+    const agent = await getAgent(id);
 
-    expect(deletedRes.status).toBe(200);
-
-    const getRes = await request(app).get(`/api/agents/${agentId}`).set('authorization', `Bearer ${token}`);
-
-    expect(getRes.status).toBe(404);
-    expect(getRes.body.message).toBe('Agente não encontrado');
+    expect(agent.message).toBe('Agente não encontrado');
   });
 
   it('should be able to fetch all agents', async () => {
-    const agent01 = makeAgent();
-    const agent02 = makeAgent({
-      first_name: 'Sebastião',
-      last_name: 'Simão',
-    });
+    await Promise.all([
+      createAgent({
+        first_name: 'Sebastião',
+        last_name: 'Simão',
+      }),
+      createAgent({
+        first_name: 'Délcio',
+        last_name: 'Issanzo',
+        type: 'revendedor',
+      }),
+    ]);
 
-    const res01 = await request(app).post('/api/agents').set('authorization', `Bearer ${token}`).send(agent01);
-    expect(res01.status).toBe(201);
+    const response = await auth(request(app).get('/api/agents'));
+    const agentList: Agent[] = response.body;
 
-    const res02 = await request(app).post('/api/agents').set('authorization', `Bearer ${token}`).send(agent02);
-    expect(res02.status).toBe(201);
+    console.log(agentList);
 
-    const fetchRes = await request(app).get('/api/agents/').set('authorization', `Bearer ${token}`);
-    const fetchResBody: Agent[] = fetchRes.body;
+    expect(response.status).toBe(200);
+    expect(agentList).toHaveLength(2);
 
-    console.log(fetchResBody);
+    expect(agentList[0].first_name).toBe('Sebastião');
+    expect(agentList[0].id_reference).toBe(9001);
 
-    expect(fetchRes.status).toBe(200);
-    expect(fetchResBody).toHaveLength(2);
-
-    expect(fetchResBody[0].first_name).toBe('Paulo');
-    expect(fetchResBody[0].id_reference).toBe(9001);
-
-    expect(fetchResBody[1].first_name).toBe('Sebastião');
-    expect(fetchResBody[1].id_reference).toBe(9002);
+    expect(agentList[1].first_name).toBe('Délcio');
+    expect(agentList[1].id_reference).toBe(1001);
   });
 });
+
+export async function createAgent(data?: Partial<CreateAgentDTO>) {
+  const agent = makeAgent(data);
+  const response = await auth(request(app).post('/api/agents')).send(agent);
+
+  expect(response.status).toBe(201);
+
+  return { id: response.body.id as string };
+}
+
+export async function getAgent(id: string) {
+  const response = await auth(request(app).get(`/api/agents/${id}`));
+  const agent = response.body as Agent & { message: string };
+  return agent;
+}

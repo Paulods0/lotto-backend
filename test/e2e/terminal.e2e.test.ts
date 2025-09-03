@@ -4,6 +4,7 @@ import { auth } from '../utils/auth';
 import { Terminal } from '../../src/features/terminal/@types/terminal.t';
 import { makeTerminal, updateTerminal } from '../factories/make-terminal';
 import { CreateTerminalDTO } from '../../src/features/terminal/schemas/create-terminal.schema';
+import { simCardId } from '../setup';
 
 describe('E2E - Terminal', () => {
   it('should be able to create a terminal and fetch it', async () => {
@@ -22,23 +23,27 @@ describe('E2E - Terminal', () => {
     );
   });
 
-  it('should be able to update a terminal and fetch it', async () => {
+  it('should be able to update a terminal', async () => {
     const response = await createTerminal();
     const terminalId = response.id;
 
     const updatedTerminal = updateTerminal({
       note: 'terminal-note-example',
       leaved_at: new Date('2025-09-01'),
+      sim_card_id: simCardId,
     });
 
-    const updateRes = await auth(request(app).put(`/api/terminals/${terminalId}`)).send(updatedTerminal);
-    expect(updateRes.status).toBe(200);
+    const { status } = await auth(request(app).put(`/api/terminals/${terminalId}`)).send(updatedTerminal);
+    expect(status).toBe(200);
 
     const terminal = await getTerminal(terminalId);
+
+    console.log(terminal);
 
     expect(terminal.id).toBe(terminalId);
     expect(terminal.note).toBe('terminal-note-example');
     expect(terminal.device_id).toBe('device-id-example');
+    expect(terminal.status).toBe('broken');
     expect(terminal.leaved_at).toEqual(expect.stringMatching('2025-09-01'));
   });
 
