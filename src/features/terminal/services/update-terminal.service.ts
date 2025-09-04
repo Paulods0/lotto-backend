@@ -2,16 +2,16 @@ import prisma from '../../../lib/prisma';
 import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
 import { RedisKeys } from '../../../utils/redis/keys';
+import { Terminal, TerminalStatus } from '../@types/terminal.t';
 import { deleteCache } from '../../../utils/redis/delete-cache';
 import { UpdateTerminalDTO } from '../schemas/update-terminal.schema';
-import { TerminalStatus } from '../@types/terminal.t';
 import { connectOrDisconnect } from '../../../utils/connect-disconnect';
 
 export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO) {
   await prisma.$transaction(async (tx) => {
     const terminal = await tx.terminal.findUnique({
       where: { id: data.id },
-      include: { sim_card: true, agent: true },
+      include: { sim_card: true, agent: { select: { pos: true } } },
     });
 
     if (!terminal) throw new NotFoundError('Terminal não encontrado');
@@ -36,7 +36,7 @@ export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO
       }
     }
 
-    const status: TerminalStatus = data.note ? 'broken' : data.sim_card_id ? 'ready' : 'stock';
+    const status = getTerminalStatus(data, terminal);
 
     const updated = await tx.terminal.update({
       where: { id: data.id },
@@ -65,3 +65,10 @@ export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO
 
   await Promise.all(promises);
 }
+
+const getTerminalStatus = (data: Omit<UpdateTerminalDTO, 'user'>, terminal: any): TerminalStatus => {
+  if (data.note) return 'broken';
+  if ((terminal as Terminal).agent?.pos?.id) return 'on_field';
+  if (data.sim_card_id) return 'ready';
+  return 'stock';
+};

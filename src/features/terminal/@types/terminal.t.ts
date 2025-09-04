@@ -1,8 +1,8 @@
 import z from 'zod';
+import { Agent } from '../../agent/@types/agent.t';
 import { simCardSchema } from '../../sim-card/@types/sim-card.t';
-import { Agent, agentSchema } from '../../agent/@types/agent.t';
 
-export const terminalStatusSchema = z.enum(['ready', 'training', 'stock', 'broken', 'maintenance']);
+export const terminalStatusSchema = z.enum(['ready', 'training', 'stock', 'broken', 'maintenance', 'on_field']);
 
 export const terminalSchema = z.object({
   id: z.uuid(),

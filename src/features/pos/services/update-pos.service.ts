@@ -1,10 +1,9 @@
 import prisma from '../../../lib/prisma';
-
 import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
+import { RedisKeys } from '../../../utils/redis';
 import { UpdatePosDTO } from '../schemas/update.schema';
 import { deleteCache } from '../../../utils/redis/delete-cache';
-import { RedisKeys } from '../../../utils/redis';
 
 export async function updatePosService(data: UpdatePosDTO) {
   await prisma.$transaction(async (tx) => {
@@ -12,10 +11,30 @@ export async function updatePosService(data: UpdatePosDTO) {
 
     if (!pos) throw new NotFoundError('POS não encontrado.');
 
+    if (data.agent_id) {
+      const agent = await tx.agent.findUnique({
+        where: { id: data.agent_id },
+      });
+
+      if (!agent) {
+        throw new NotFoundError('Agente não encontrado.');
+      }
+
+      await tx.agent.update({
+        where: { id: agent.id },
+        data: {
+          status: 'active',
+        },
+      });
+    }
+
     const after = await tx.pos.update({
       where: { id: data.id },
       data: {
+        agent_id: data.agent_id,
+        licence_id: data.licence_id,
         coordinates: data.coordinates,
+        status: data.agent_id ? 'active' : pos.status,
       },
     });
 

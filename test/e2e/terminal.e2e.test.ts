@@ -32,7 +32,7 @@ describe('E2E - Terminal', () => {
     const terminalId = response.id;
 
     const updatedTerminal = updateTerminal({
-      note: 'terminal-note-example',
+      // note: 'terminal-note-example',
       leaved_at: new Date('2025-09-01'),
       sim_card_id: simCardId,
     });
@@ -41,6 +41,8 @@ describe('E2E - Terminal', () => {
     expect(status).toBe(200);
 
     const terminal = await getTerminal(terminalId);
+
+    console.log(terminal);
 
     expect(terminal.id).toBe(terminalId);
     expect(terminal.note).toBe('terminal-note-example');
