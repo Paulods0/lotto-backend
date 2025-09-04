@@ -1,9 +1,9 @@
 import prisma from '../../../lib/prisma';
 import { NotFoundError } from '../../../errors';
-import { RedisKeys } from '../../../utils/redis';
+import { deleteCache, RedisKeys } from '../../../utils/redis';
 
 export async function resetTerminalService(id: string) {
-  await prisma.$transaction(async tx => {
+  await prisma.$transaction(async (tx) => {
     const terminal = await tx.terminal.findUnique({
       where: {
         id,
@@ -26,10 +26,11 @@ export async function resetTerminalService(id: string) {
   });
 
   await Promise.all([
-    RedisKeys.pos.all(),
-    RedisKeys.agents.all(),
-    RedisKeys.terminals.all(),
-    RedisKeys.auditLogs.all(),
+    deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.agents.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
+    deleteCache(RedisKeys.terminals.all()),
+
     //TODO: clear sim card cache
   ]);
 }

@@ -2,8 +2,10 @@ import app from '../../src';
 import request from 'supertest';
 import { auth } from '../utils/auth';
 import { makeLicence } from '../factories/make-licence';
+import { createLicence, getLicence } from '../utils/licence';
 import { Licence } from '../../src/features/licence/@types/licence.t';
-import { CreateLicenceDTO } from '../../src/features/licence/schemas/create-licence.schema';
+
+export const licenceURL = '/api/licences';
 
 describe('E2E - Licence', () => {
   it('should be able to create a licence', async () => {
@@ -28,7 +30,7 @@ describe('E2E - Licence', () => {
       limit: 10,
     });
 
-    const { status } = await auth(request(app).put(`/api/licences/${id}`).send(data));
+    const { status } = await auth(request(app).put(`${licenceURL}/${id}`).send(data));
     expect(status).toBe(200);
 
     const licence = await getLicence(id);
@@ -44,7 +46,7 @@ describe('E2E - Licence', () => {
   it('should be able to delete a licence', async () => {
     const { id } = await createLicence();
 
-    const { status } = await auth(request(app).delete(`/api/licences/${id}`));
+    const { status } = await auth(request(app).delete(`${licenceURL}/${id}`));
     expect(status).toBe(200);
 
     const licence = await getLicence(id);
@@ -58,7 +60,7 @@ describe('E2E - Licence', () => {
       ids: [pos01.id, pos02.id],
     };
 
-    const { status } = await auth(request(app).delete(`/api/licences/bulk`)).send(data);
+    const { status } = await auth(request(app).delete(`${licenceURL}/bulk`)).send(data);
     expect(status).toBe(200);
 
     const [licence01, licence02] = await Promise.all([getLicence(pos01.id), getLicence(pos02.id)]);
@@ -68,12 +70,10 @@ describe('E2E - Licence', () => {
   });
 
   it('should be able to fetch all licences', async () => {
-    await Promise.all([
-      createLicence({ description: 'first-licence', number: 'VD01' }),
-      createLicence({ description: 'second-licence', number: 'VD02' }),
-    ]);
+    await createLicence({ description: 'first-licence', number: 'VD01' });
+    await createLicence({ description: 'second-licence', number: 'VD02' });
 
-    const response = await auth(request(app).get('/api/licences'));
+    const response = await auth(request(app).get(`${licenceURL}`));
     const licenceList: Licence[] = response.body;
 
     expect(response.status).toBe(200);
@@ -83,16 +83,3 @@ describe('E2E - Licence', () => {
     expect(licenceList[1].description).toBe('second-licence');
   });
 });
-
-async function createLicence(data?: Partial<CreateLicenceDTO>) {
-  const licence = makeLicence(data);
-  const res = await auth(request(app).post('/api/licences')).send(licence);
-  expect(res.status).toBe(201);
-
-  return res.body as Licence;
-}
-
-async function getLicence(id: string) {
-  const response = await auth(request(app).get(`/api/licences/${id}`));
-  return response.body as Licence & { message: string };
-}

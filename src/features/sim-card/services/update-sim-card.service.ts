@@ -2,6 +2,7 @@ import prisma from '../../../lib/prisma';
 import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
 import { UpdateSimCardDTO } from '../schemas/update-sim-card.schema';
+import { TerminalStatus } from '../../terminal/@types/terminal.t';
 
 export async function updateSimCardService({ user, ...data }: UpdateSimCardDTO) {
   await prisma.$transaction(async (tx) => {
@@ -25,6 +26,13 @@ export async function updateSimCardService({ user, ...data }: UpdateSimCardDTO) 
       if (!terminal) {
         throw new NotFoundError('Terminal não encontrado');
       }
+
+      await tx.terminal.update({
+        where: { id: data.terminal_id },
+        data: {
+          status: 'ready',
+        },
+      });
     }
 
     const updated = await tx.simCard.update({

@@ -2,8 +2,10 @@ import app from '../../src';
 import request from 'supertest';
 import { auth } from '../utils/auth';
 import { makePos } from '../factories/make-pos';
+import { createPos, getPos } from '../utils/pos';
 import { Pos } from '../../src/features/pos/@types/pos.t';
-import { CreatePosDTO } from '../../src/features/pos/schemas/create-pos.schema';
+
+export const posURL = '/api/pos' as const;
 
 describe('E2E - Pos', () => {
   it('should be able to create a pos', async () => {
@@ -21,7 +23,7 @@ describe('E2E - Pos', () => {
       coordinates: '13,-12',
     });
 
-    const { status } = await auth(request(app).put(`/api/pos/${id}`)).send(data);
+    const { status } = await auth(request(app).put(`${posURL}/${id}`)).send(data);
     expect(status).toBe(200);
 
     const pos = await getPos(id);
@@ -34,11 +36,10 @@ describe('E2E - Pos', () => {
   it('should be able to delete a pos', async () => {
     const { id } = await createPos();
 
-    const { status } = await auth(request(app).delete(`/api/pos/${id}`));
+    const { status } = await auth(request(app).delete(`${posURL}/${id}`));
     expect(status).toBe(200);
 
-    const pos = await getPos(id);
-    expect(pos.message).toBe('Pos não encontrado');
+    await expect(getPos(id)).resolves.toHaveProperty('message', 'Pos não encontrado');
   });
 
   it('should be able to delete many a pos`s ', async () => {
@@ -47,15 +48,17 @@ describe('E2E - Pos', () => {
 
     const data = { ids: [id01, id02] };
 
-    const { status } = await auth(request(app).delete(`/api/pos/bulk`)).send(data);
+    const { status } = await auth(request(app).delete(`${posURL}/bulk`)).send(data);
     expect(status).toBe(200);
 
-    const pos = await getPos(id01);
-    expect(pos.message).toBe('Pos não encontrado');
+    const response = await auth(request(app).get('/api/pos'));
+    const posList = response.body as Pos[];
+    expect(posList).toHaveLength(0);
   });
 
   it('should be able to fetch all pos', async () => {
-    await Promise.all([createPos({ coordinates: '10,000,-13,000' }), createPos({ coordinates: '12,000,-14,000' })]);
+    await createPos({ coordinates: '10,000,-13,000' });
+    await createPos({ coordinates: '12,000,-14,000' });
 
     const response = await auth(request(app).get('/api/pos'));
     const posList: Pos[] = response.body;
@@ -66,16 +69,3 @@ describe('E2E - Pos', () => {
     expect(posList[1].coordinates).toBe('12,000,-14,000');
   });
 });
-
-export async function createPos(data?: Partial<CreatePosDTO>) {
-  const pos = makePos(data);
-  const response = await auth(request(app).post('/api/pos')).send(pos);
-  expect(response.status).toBe(201);
-
-  return response.body as Pos;
-}
-
-export async function getPos(id: string) {
-  const response = await auth(request(app).get(`/api/pos/${id}`));
-  return response.body as Pos & { message: string };
-}

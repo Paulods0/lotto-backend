@@ -1,10 +1,13 @@
 import app from '../../src';
 import request from 'supertest';
 import { auth } from '../utils/auth';
+import { createAgent } from '../utils/agent';
+import { createSimCard } from '../utils/sim-card';
+import { updateTerminal } from '../factories/make-terminal';
+import { createTerminal, getTerminal } from '../utils/terminal';
 import { Terminal } from '../../src/features/terminal/@types/terminal.t';
-import { makeTerminal, updateTerminal } from '../factories/make-terminal';
-import { CreateTerminalDTO } from '../../src/features/terminal/schemas/create-terminal.schema';
-import { createSimCard } from './sim-card.e2e.test';
+
+export const terminalURL = '/api/terminals' as const;
 
 describe('E2E - Terminal', () => {
   it('should be able to create a terminal and fetch it', async () => {
@@ -34,7 +37,7 @@ describe('E2E - Terminal', () => {
       sim_card_id: simCardId,
     });
 
-    const { status } = await auth(request(app).put(`/api/terminals/${terminalId}`)).send(updatedTerminal);
+    const { status } = await auth(request(app).put(`${terminalURL}/${terminalId}`)).send(updatedTerminal);
     expect(status).toBe(200);
 
     const terminal = await getTerminal(terminalId);
@@ -49,7 +52,7 @@ describe('E2E - Terminal', () => {
   it('should be able to delete a terminal and not fetch it', async () => {
     const { id } = await createTerminal();
 
-    const response = await auth(request(app).delete(`/api/terminals/${id}`));
+    const response = await auth(request(app).delete(`${terminalURL}/${id}`));
     expect(response.status).toBe(200);
 
     const terminal = await getTerminal(id);
@@ -63,11 +66,11 @@ describe('E2E - Terminal', () => {
 
     const data = { ids: [id01, id02] };
 
-    const deletedRes = await auth(request(app).delete('/api/terminals/bulk')).send(data);
+    const deletedRes = await auth(request(app).delete(`${terminalURL}/bulk`)).send(data);
 
     expect(deletedRes.status).toBe(200);
 
-    const fetchRes = await auth(request(app).get(`/api/terminals`));
+    const fetchRes = await auth(request(app).get(`${terminalURL}`));
     const fetchBody = fetchRes.body as Terminal;
 
     expect(fetchRes.status).toBe(200);
@@ -78,22 +81,36 @@ describe('E2E - Terminal', () => {
     await createTerminal();
     await createTerminal({ serial: 'VFD952366605AE' });
 
-    const response = await auth(request(app).get('/api/terminals/'));
+    const response = await auth(request(app).get(`${terminalURL}`));
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(2);
   });
+
+  it('should be able to reset terminal', async () => {
+    const { id } = await createTerminal();
+    const { id: agentId } = await createAgent();
+    const { id: simCardId } = await createSimCard();
+
+    const data = updateTerminal({
+      agent_id: agentId,
+      sim_card_id: simCardId,
+    });
+
+    const updateTerminalResponse = await auth(request(app).put(`${terminalURL}/${id}`)).send(data);
+    const terminal = await getTerminal(id);
+
+    expect(terminal.agent).not.toBeNull();
+    expect(terminal.sim_card).not.toBeNull();
+    expect(updateTerminalResponse.status).toBe(200);
+    expect(updateTerminalResponse.body.message).toBe('O terminal foi atualizado com sucesso');
+
+    const { status, body } = await auth(request(app).put(`${terminalURL}/reset/${id}`));
+    const terminalReseted = await getTerminal(id);
+
+    expect(status).toBe(200);
+    expect(body.message).toBe('O terminal foi resetado com sucesso');
+    expect(terminalReseted.sim_card).toBeNull();
+    expect(terminalReseted.agent).toBeNull();
+  });
 });
-
-export async function createTerminal(data?: Partial<CreateTerminalDTO>) {
-  const terminal = makeTerminal(data);
-  const res = await auth(request(app).post('/api/terminals')).send(terminal);
-  expect(res.status).toBe(201);
-
-  return res.body as Terminal;
-}
-
-export async function getTerminal(id: string) {
-  const response = await auth(request(app).get(`/api/terminals/${id}`));
-  return response.body as Terminal & { message: string };
-}

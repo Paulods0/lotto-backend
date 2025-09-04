@@ -1,10 +1,11 @@
 import {
+  getSimCardController,
+  resetSimCardController,
+  updateSimCardController,
   createSimCardController,
-  deleteManySimCardsController,
   deleteSimCardController,
   fetchManySimCardsController,
-  getSimCardController,
-  updateSimCardController,
+  deleteManySimCardsController,
 } from './controllers';
 import { Router } from 'express';
 import catchErrors from '../../utils/catch-errors';
@@ -12,6 +13,8 @@ import catchErrors from '../../utils/catch-errors';
 const simCardRouter = Router();
 
 simCardRouter.post('/', catchErrors(createSimCardController));
+
+simCardRouter.put('/reset/:id', catchErrors(resetSimCardController));
 simCardRouter.put('/:id', catchErrors(updateSimCardController));
 
 simCardRouter.delete('/bulk', catchErrors(deleteManySimCardsController));

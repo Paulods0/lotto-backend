@@ -1,9 +1,9 @@
-import { NotFoundError } from '../../../errors';
 import prisma from '../../../lib/prisma';
-import { deleteCache, RedisKeys } from '../../../utils/redis';
+import { NotFoundError } from '../../../errors';
+import { RedisKeys, deleteCache } from '../../../utils/redis';
 
 export async function resetAgentService(id: string) {
-  await prisma.$transaction(async tx => {
+  await prisma.$transaction(async (tx) => {
     const agent = await tx.agent.findUnique({
       where: {
         id,

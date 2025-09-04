@@ -45,28 +45,18 @@ model Agent {
 }
 
 model Terminal {
-  id           String          @id @default(uuid())
-  id_reference Int?            @unique
-  serial       String
-  device_id    String?
-  note         String?
-  sim_card     SimCard?
-  status       TerminalStatus? @default(stock)
-  created_at   DateTime        @default(now())
-  arrived_at   DateTime
-  leaved_at    DateTime?
+  id         String          @id @default(uuid())
+  serial     String
+  device_id  String?
+  note       String?
+  status     TerminalStatus? @default(stock)
+  created_at DateTime        @default(now())
+  arrived_at DateTime
+  leaved_at  DateTime?
 
-  area_id     Int?
-  city_id     Int?
-  zone_id     Int?
-  agent_id    String? @unique
-  province_id Int?
-
-  area     Area?     @relation(fields: [area_id], references: [id])
-  city     City?     @relation(fields: [city_id], references: [id])
-  zone     Zone?     @relation(fields: [zone_id], references: [id])
-  agent    Agent?    @relation(fields: [agent_id], references: [id])
-  province Province? @relation(fields: [province_id], references: [id])
+  agent_id String?  @unique
+  agent    Agent?   @relation(fields: [agent_id], references: [id])
+  sim_card SimCard?
 
   @@map("terminals")
 }
@@ -89,28 +79,35 @@ model Pos {
   id String @id @default(uuid())
 
   coordinates String
-  admin_id    Int
-  province_id Int
-  city_id     Int
   status      PosStatus @default(pending)
   created_at  DateTime  @default(now())
 
-  area_id    Int?
-  zone_id    Int?
-  type_id    Int?
-  subtype_id Int?
-  licence_id String?
-  agent_id   String? @unique
-
-  area     Area?          @relation(fields: [area_id], references: [id])
-  city     City           @relation(fields: [city_id], references: [id])
-  type     Type?          @relation(fields: [type_id], references: [id])
-  zone     Zone?          @relation(fields: [zone_id], references: [id])
-  subtype  Subtype?       @relation(fields: [subtype_id], references: [id])
-  province Province       @relation(fields: [province_id], references: [id])
-  agent    Agent?         @relation(fields: [agent_id], references: [id])
+  admin_id Int
   admin    Administration @relation(fields: [admin_id], references: [id])
-  licence  Licence?       @relation(fields: [licence_id], references: [id])
+
+  licence_id String?
+  licence    Licence? @relation(fields: [licence_id], references: [id])
+
+  agent_id String? @unique
+  agent    Agent?  @relation(fields: [agent_id], references: [id])
+
+  area_id Int?
+  area    Area? @relation(fields: [area_id], references: [id])
+
+  zone_id Int?
+  zone    Zone? @relation(fields: [zone_id], references: [id])
+
+  type_id Int?
+  type    Type? @relation(fields: [type_id], references: [id])
+
+  subtype_id Int?
+  subtype    Subtype? @relation(fields: [subtype_id], references: [id])
+
+  city_id Int
+  city    City @relation(fields: [city_id], references: [id])
+
+  province_id Int
+  province    Province @relation(fields: [province_id], references: [id])
 
   @@map("pos")
 }
@@ -147,43 +144,39 @@ model Administration {
 }
 
 model Province {
-  name      String     @unique
-  id        Int        @id @default(autoincrement())
-  cities    City[]
-  pos       Pos[]
-  terminals Terminal[]
+  name   String @unique
+  id     Int    @id @default(autoincrement())
+  cities City[]
+  pos    Pos[]
 
   @@map("provinces")
 }
 
 model City {
-  name        String     @unique
-  id          Int        @id @default(autoincrement())
+  name        String   @unique
+  id          Int      @id @default(autoincrement())
   province_id Int
-  province    Province   @relation(fields: [province_id], references: [id])
+  province    Province @relation(fields: [province_id], references: [id])
   pos         Pos[]
-  terminals   Terminal[]
 
   @@map("cities")
 }
 
 model Area {
-  name      String     @unique
-  id        Int        @id @default(autoincrement())
-  pos       Pos[]
-  terminals Terminal[]
-  zones     Zone[]
+  name  String @unique
+  id    Int    @id @default(autoincrement())
+  pos   Pos[]
+  zones Zone[]
 
   @@map("areas")
 }
 
 model Zone {
-  number    Int        @unique
-  id        Int        @id @default(autoincrement())
-  area_id   Int
-  pos       Pos[]
-  terminals Terminal[]
-  area      Area       @relation(fields: [area_id], references: [id])
+  number  Int   @unique
+  id      Int   @id @default(autoincrement())
+  area_id Int
+  pos     Pos[]
+  area    Area  @relation(fields: [area_id], references: [id])
 
   @@map("zones")
 }

@@ -1,17 +1,17 @@
 import prisma from '../../../lib/prisma';
-import { BadRequestError, NotFoundError } from '../../../errors';
+import { NotFoundError } from '../../../errors';
 import { audit } from '../../../utils/audit-log';
 import { RedisKeys } from '../../../utils/redis/keys';
 import { deleteCache } from '../../../utils/redis/delete-cache';
 import { UpdateTerminalDTO } from '../schemas/update-terminal.schema';
-import { connectOrDisconnect } from '../../../utils/connect-disconnect';
 import { TerminalStatus } from '../@types/terminal.t';
+import { connectOrDisconnect } from '../../../utils/connect-disconnect';
 
 export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO) {
   await prisma.$transaction(async (tx) => {
     const terminal = await tx.terminal.findUnique({
       where: { id: data.id },
-      include: { sim_card: true },
+      include: { sim_card: true, agent: true },
     });
 
     if (!terminal) throw new NotFoundError('Terminal não encontrado');
@@ -26,26 +26,17 @@ export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO
       }
     }
 
-    let agentHasPos = false;
-
     if (data.agent_id) {
       const agent = await tx.agent.findUnique({
         where: { id: data.agent_id },
-        include: { pos: true },
       });
 
       if (!agent) {
         throw new NotFoundError('Agent não encontrado');
       }
-
-      agentHasPos = agent.pos?.id ? true : false;
     }
 
     const status: TerminalStatus = data.note ? 'broken' : data.sim_card_id ? 'ready' : 'stock';
-
-    if (data.agent_id && !data.leaved_at) {
-      throw new BadRequestError('A data de saída é obrigatória');
-    }
 
     const updated = await tx.terminal.update({
       where: { id: data.id },
@@ -53,7 +44,7 @@ export async function updateTerminalService({ user, ...data }: UpdateTerminalDTO
         status,
         note: data.note,
         leaved_at: data.leaved_at,
-        agent_id: data.agent_id,
+        ...(data.agent_id && { agent_id: data.agent_id }),
         ...connectOrDisconnect('sim_card', data.sim_card_id),
       },
     });

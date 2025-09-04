@@ -1,11 +1,13 @@
 import app from '../../src';
 import request from 'supertest';
 import { auth } from '../utils/auth';
+import { createPos } from '../utils/pos';
+import { createTerminal } from '../utils/terminal';
 import { makeAgent } from '../factories/make-agent';
+import { createAgent, getAgent } from '../utils/agent';
 import { Agent } from '../../src/features/agent/@types/agent.t';
-import { CreateAgentDTO } from '../../src/features/agent/schemas/create-agent.schema';
-import { createTerminal } from './terminal.e2e.test';
-import { createPos } from './pos.e2e.test';
+
+export const agentURL = '/api/agents';
 
 describe('E2E - Agent', () => {
   it('should be able to create an agent', async () => {
@@ -38,19 +40,17 @@ describe('E2E - Agent', () => {
       training_date: new Date('2025-11-12'),
     });
 
-    const { status } = await auth(request(app).put(`/api/agents/${id}`)).send(data);
+    const { status } = await auth(request(app).put(`${agentURL}/${id}`)).send(data);
     expect(status).toBe(200);
 
     const agent = await getAgent(id);
-
-    console.log(agent);
 
     expect(agent.id).toBe(id);
     expect(agent.first_name).toBe('Ana');
     expect(agent.last_name).toBe('Silva');
     expect(agent.bi_number).toBe('88888888LA88');
     expect(agent.genre).toBe('female');
-    expect(agent.status).toBe('scheduled');
+    expect(agent.status).toBe('active');
     expect(agent.agent_type).toBe('lotaria_nacional');
     expect(agent.terminal).toBeDefined();
     expect(agent.pos).toBeDefined();
@@ -59,7 +59,7 @@ describe('E2E - Agent', () => {
   it('should be able to delete a agent', async () => {
     const { id } = await createAgent();
 
-    const { status } = await auth(request(app).delete(`/api/agents/${id}`));
+    const { status } = await auth(request(app).delete(`${agentURL}/${id}`));
     expect(status).toBe(200);
 
     const agent = await getAgent(id);
@@ -80,7 +80,7 @@ describe('E2E - Agent', () => {
       }),
     ]);
 
-    const response = await auth(request(app).get('/api/agents'));
+    const response = await auth(request(app).get(`${agentURL}`));
     const agentList: Agent[] = response.body;
 
     expect(response.status).toBe(200);
@@ -104,37 +104,22 @@ describe('E2E - Agent', () => {
       pos_id: posId,
     });
 
-    await auth(request(app).put(`/api/agents/${id}`)).send(data);
+    await auth(request(app).put(`${agentURL}/${id}`)).send(data);
 
+    // agent with pos and terminal
     const agent = await getAgent(id);
-    console.log('Agent :', agent);
 
     expect(agent.pos).toBeDefined();
     expect(agent.terminal).toBeDefined();
 
-    const { status, body } = await auth(request(app).put(`/api/agents/reset/${id}`));
+    const { status, body } = await auth(request(app).put(`${agentURL}/reset/${id}`));
     expect(status).toBe(200);
     expect(body.message).toBe('Agente resetado com sucesso');
 
+    // agent without pos and terminal
     const agentReseted = await getAgent(id);
-    console.log('Agent reseted :', agentReseted);
 
     expect(agentReseted.pos).toBe(null);
     expect(agentReseted.terminal).toBe(null);
   });
 });
-
-export async function createAgent(data?: Partial<CreateAgentDTO>) {
-  const agent = makeAgent(data);
-  const response = await auth(request(app).post('/api/agents')).send(agent);
-
-  expect(response.status).toBe(201);
-
-  return { id: response.body.id as string };
-}
-
-export async function getAgent(id: string) {
-  const response = await auth(request(app).get(`/api/agents/${id}`));
-  const agent = response.body as Agent & { message: string };
-  return agent;
-}

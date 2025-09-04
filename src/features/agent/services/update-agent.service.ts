@@ -8,7 +8,7 @@ import { connectOrDisconnect } from '../../../utils/connect-disconnect';
 import { AgentStatus } from '../@types/agent.t';
 
 export async function updateAgentService({ user, ...data }: UpdateAgentDTO) {
-  await prisma.$transaction(async tx => {
+  await prisma.$transaction(async (tx) => {
     const agent = await tx.agent.findUnique({
       where: {
         id: data.id,

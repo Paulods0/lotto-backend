@@ -1,9 +1,9 @@
-import { Prisma, TerminalStatus } from '@prisma/client';
-import { PaginationParams } from '../../../@types/pagination-params';
-import { getCache } from '../../../utils/redis/get-cache';
-import { RedisKeys } from '../../../utils/redis/keys';
 import prisma from '../../../lib/prisma';
+import { RedisKeys } from '../../../utils/redis/keys';
+import { Prisma, TerminalStatus } from '@prisma/client';
+import { getCache } from '../../../utils/redis/get-cache';
 import { setCache } from '../../../utils/redis/set-cache';
+import { PaginationParams } from '../../../@types/pagination-params';
 
 export async function fetchManyTerminalsService(params: PaginationParams) {
   const cacheKey = RedisKeys.terminals.listWithFilters(params);
@@ -53,10 +53,6 @@ export async function fetchManyTerminalsService(params: PaginationParams) {
     skip: offset,
     orderBy: { created_at: 'asc' },
     include: {
-      city: true,
-      area: true,
-      zone: true,
-      province: true,
       agent: {
         select: {
           id: true,
@@ -87,7 +83,7 @@ function buildFilters(query: string): Prisma.TerminalWhereInput[] {
   filters.push({ device_id: { contains: query, mode: 'insensitive' } });
 
   if (isNumeric) {
-    filters.push({ id_reference: numericQuery });
+    filters.push({ agent: { id_reference: numericQuery } });
   }
 
   return filters;

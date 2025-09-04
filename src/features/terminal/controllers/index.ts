@@ -4,3 +4,4 @@ export * from './fetch-many-terminals.controller';
 export * from './delete-many-terminals.controller';
 export * from './delete-terminal.controller';
 export * from './get-terminal.controller';
+export * from './reset-terminal.controller';

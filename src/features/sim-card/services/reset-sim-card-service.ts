@@ -1,9 +1,9 @@
 import prisma from '../../../lib/prisma';
 import { NotFoundError } from '../../../errors';
-import { RedisKeys } from '../../../utils/redis';
+import { deleteCache, RedisKeys } from '../../../utils/redis';
 
 export async function resetSimCardService(id: string) {
-  await prisma.$transaction(async tx => {
+  await prisma.$transaction(async (tx) => {
     const simCard = await tx.simCard.findUnique({
       where: {
         id,
@@ -14,21 +14,33 @@ export async function resetSimCardService(id: string) {
       throw new NotFoundError('Sim card não encontrado ');
     }
 
-    await tx.simCard.update({
-      where: {
-        id: simCard.id,
-      },
-      data: {
-        terminal: { disconnect: true },
-      },
-    });
+    if (simCard.terminal_id) {
+      await tx.terminal.update({
+        where: {
+          id: simCard.terminal_id,
+        },
+        data: {
+          status: 'stock',
+        },
+      });
+
+      await tx.simCard.update({
+        where: {
+          id: simCard.id,
+        },
+        data: {
+          terminal_id: null,
+        },
+      });
+    }
   });
 
   await Promise.all([
-    RedisKeys.pos.all(),
-    RedisKeys.agents.all(),
-    RedisKeys.terminals.all(),
-    RedisKeys.auditLogs.all(),
+    deleteCache(RedisKeys.pos.all()),
+    deleteCache(RedisKeys.agents.all()),
+    deleteCache(RedisKeys.terminals.all()),
+    deleteCache(RedisKeys.auditLogs.all()),
+
     //TODO: clear sim card cache
   ]);
 }

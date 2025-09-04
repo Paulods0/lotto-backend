@@ -1,10 +1,11 @@
 import {
+  getTerminalController,
+  resetTerminalController,
   createTerminalController,
-  deleteManyTerminalsController,
+  updateTerminalController,
   deleteTerminalController,
   fetchManyTerminalsController,
-  getTerminalController,
-  updateTerminalController,
+  deleteManyTerminalsController,
 } from './controllers';
 import { Router } from 'express';
 import catchErrors from '../../utils/catch-errors';
@@ -12,9 +13,13 @@ import catchErrors from '../../utils/catch-errors';
 const terminalRouter = Router();
 
 terminalRouter.post('/', catchErrors(createTerminalController));
+
+terminalRouter.put('/reset/:id', catchErrors(resetTerminalController));
 terminalRouter.put('/:id', catchErrors(updateTerminalController));
+
 terminalRouter.delete('/bulk', catchErrors(deleteManyTerminalsController));
 terminalRouter.delete('/:id', catchErrors(deleteTerminalController));
+
 terminalRouter.get('/', catchErrors(fetchManyTerminalsController));
 terminalRouter.get('/:id', catchErrors(getTerminalController));
 

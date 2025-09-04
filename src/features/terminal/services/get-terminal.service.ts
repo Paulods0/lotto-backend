@@ -10,21 +10,8 @@ export async function getTerminalService(id: string) {
 
   const terminal = await prisma.terminal.findUnique({
     where: { id },
-    omit: {
-      area_id: true,
-      zone_id: true,
-      province_id: true,
-      city_id: true,
-      agent_id: true,
-    },
+
     include: {
-      province: true,
-      city: true,
-      area: {
-        include: {
-          zones: true,
-        },
-      },
       sim_card: {
         select: {
           number: true,

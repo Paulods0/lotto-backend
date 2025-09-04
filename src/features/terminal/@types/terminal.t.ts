@@ -1,5 +1,6 @@
 import z from 'zod';
 import { simCardSchema } from '../../sim-card/@types/sim-card.t';
+import { Agent, agentSchema } from '../../agent/@types/agent.t';
 
 export const terminalStatusSchema = z.enum(['ready', 'training', 'stock', 'broken', 'maintenance']);
 
@@ -15,5 +16,5 @@ export const terminalSchema = z.object({
   leaved_at: z.date().optional(),
 });
 
-export type Terminal = z.infer<typeof terminalSchema>;
+export type Terminal = z.infer<typeof terminalSchema> & { agent?: Agent };
 export type TerminalStatus = z.infer<typeof terminalStatusSchema>;
