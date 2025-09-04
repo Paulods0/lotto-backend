@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id                   String              @id @default(uuid())
-  first_name           String
-  last_name            String
-  email                String              @unique
-  password             String
-  role                 UserRole
-  zone_id              String?
-  area_id              String?
-  created_at           DateTime            @default(now())
-  reset_password_token ResetPasswordToken?
+  id                 String              @id @default(uuid())
+  first_name         String
+  last_name          String
+  email              String              @unique
+  password           String
+  role               UserRole            @default(user)
+  zone_id            String?
+  area_id            String?
+  membership         Membership[]
+  created_at         DateTime            @default(now())
+  ResetPasswordToken ResetPasswordToken?
 
   @@map("users")
 }
@@ -32,23 +33,10 @@ model Agent {
   afrimoney_number Int?
   agent_type       AgentType
   bi_number        String?
-  status           AgentStatus @default(agendado)
-  area_id          Int?
-  city_id          Int?
-  type_id          Int?
-  zone_id          Int?
-  subtype_id       Int?
-  province_id      Int?
+  status           AgentStatus @default(scheduled)
 
   training_date DateTime
   created_at    DateTime @default(now())
-
-  area     Area?     @relation(fields: [area_id], references: [id])
-  city     City?     @relation(fields: [city_id], references: [id])
-  type     Type?     @relation(fields: [type_id], references: [id])
-  zone     Zone?     @relation(fields: [zone_id], references: [id])
-  subtype  Subtype?  @relation(fields: [subtype_id], references: [id])
-  province Province? @relation(fields: [province_id], references: [id])
 
   terminal Terminal?
   pos      Pos?
@@ -57,78 +45,91 @@ model Agent {
 }
 
 model Terminal {
-  id            String          @id @default(uuid())
-  id_reference  Int?            @unique
-  serial        String
-  pin           Int?
-  puk           Int?
-  sim_card      Int
-  device_id     String?
-  note          String?
-  delivery_date DateTime?
-  status        TerminalStatus? @default(stock)
-  created_at    DateTime        @default(now())
+  id         String          @id @default(uuid())
+  serial     String
+  device_id  String?
+  note       String?
+  status     TerminalStatus? @default(stock)
+  created_at DateTime        @default(now())
+  arrived_at DateTime
+  leaved_at  DateTime?
 
-  area_id     Int?
-  city_id     Int?
-  zone_id     Int?
-  province_id Int?
-  agent_id    String? @unique
-
-  area     Area?     @relation(fields: [area_id], references: [id])
-  city     City?     @relation(fields: [city_id], references: [id])
-  zone     Zone?     @relation(fields: [zone_id], references: [id])
-  agent    Agent?    @relation(fields: [agent_id], references: [id])
-  province Province? @relation(fields: [province_id], references: [id])
+  agent_id String?  @unique
+  agent    Agent?   @relation(fields: [agent_id], references: [id])
+  sim_card SimCard?
 
   @@map("terminals")
 }
 
-model Pos {
-  id           String   @id @default(uuid())
-  id_reference Int?     @unique
-  coordinates  String
-  agent_id     String?  @unique
-  licence_id   String?
-  created_at   DateTime @default(now())
-  admin_id     Int?
-  area_id      Int?
-  province_id  Int?
-  subtype_id   Int?
-  type_id      Int?
-  zone_id      Int?
-  city_id      Int?
+model SimCard {
+  id String @id @default(uuid())
 
-  area     Area?           @relation(fields: [area_id], references: [id])
-  city     City?           @relation(fields: [city_id], references: [id])
-  type     Type?           @relation(fields: [type_id], references: [id])
-  zone     Zone?           @relation(fields: [zone_id], references: [id])
-  admin    Administration? @relation(fields: [admin_id], references: [id])
-  agent    Agent?          @relation(fields: [agent_id], references: [id])
-  subtype  Subtype?        @relation(fields: [subtype_id], references: [id])
-  licence  Licence?        @relation(fields: [licence_id], references: [id])
-  province Province?       @relation(fields: [province_id], references: [id])
+  number     Int
+  pin        Int?
+  puk        Int?
+  created_at DateTime @default(now())
+
+  terminal_id String?   @unique
+  terminal    Terminal? @relation(fields: [terminal_id], references: [id])
+
+  @@map("sim_cards")
+}
+
+model Pos {
+  id String @id @default(uuid())
+
+  coordinates String
+  status      PosStatus @default(pending)
+  created_at  DateTime  @default(now())
+
+  admin_id Int
+  admin    Administration @relation(fields: [admin_id], references: [id])
+
+  licence_id String?
+  licence    Licence? @relation(fields: [licence_id], references: [id])
+
+  agent_id String? @unique
+  agent    Agent?  @relation(fields: [agent_id], references: [id])
+
+  area_id Int?
+  area    Area? @relation(fields: [area_id], references: [id])
+
+  zone_id Int?
+  zone    Zone? @relation(fields: [zone_id], references: [id])
+
+  type_id Int?
+  type    Type? @relation(fields: [type_id], references: [id])
+
+  subtype_id Int?
+  subtype    Subtype? @relation(fields: [subtype_id], references: [id])
+
+  city_id Int
+  city    City @relation(fields: [city_id], references: [id])
+
+  province_id Int
+  province    Province @relation(fields: [province_id], references: [id])
 
   @@map("pos")
 }
 
 model Licence {
-  id            String        @id @default(uuid())
-  number        String
-  description   String
-  file          String?
-  coordinates   String?
-  reference     String
-  limit         Int           @default(1)
-  status        LicenceStatus @default(livre)
-  created_at    DateTime      @default(now())
-  expires_at    DateTime?
-  creation_date DateTime?     @default(now())
+  id          String        @id @default(uuid())
+  number      String
+  description String
+  reference   String
+  limit       Int           @default(1)
+  status      LicenceStatus @default(free)
+  emitted_at  DateTime
+  expires_at  DateTime
+  created_at  DateTime      @default(now())
+
+  file        String?
+  coordinates String?
 
   admin_id Int?
+  admin    Administration? @relation(fields: [admin_id], references: [id])
 
-  admin Administration? @relation(fields: [admin_id], references: [id])
-  pos   Pos[]
+  pos Pos[]
 
   @@map("licences")
 }
@@ -143,47 +144,39 @@ model Administration {
 }
 
 model Province {
-  name      String     @unique
-  id        Int        @id @default(autoincrement())
-  agents    Agent[]
-  cities    City[]
-  pos       Pos[]
-  terminals Terminal[]
+  name   String @unique
+  id     Int    @id @default(autoincrement())
+  cities City[]
+  pos    Pos[]
 
   @@map("provinces")
 }
 
 model City {
-  name        String     @unique
-  id          Int        @id @default(autoincrement())
+  name        String   @unique
+  id          Int      @id @default(autoincrement())
   province_id Int
-  agents      Agent[]
-  province    Province   @relation(fields: [province_id], references: [id])
+  province    Province @relation(fields: [province_id], references: [id])
   pos         Pos[]
-  terminals   Terminal[]
 
   @@map("cities")
 }
 
 model Area {
-  name      String     @unique
-  id        Int        @id @default(autoincrement())
-  agents    Agent[]
-  pos       Pos[]
-  terminals Terminal[]
-  zones     Zone[]
+  name  String @unique
+  id    Int    @id @default(autoincrement())
+  pos   Pos[]
+  zones Zone[]
 
   @@map("areas")
 }
 
 model Zone {
-  number    Int        @unique
-  id        Int        @id @default(autoincrement())
-  area_id   Int
-  agents    Agent[]
-  pos       Pos[]
-  terminals Terminal[]
-  area      Area       @relation(fields: [area_id], references: [id])
+  number  Int   @unique
+  id      Int   @id @default(autoincrement())
+  area_id Int
+  pos     Pos[]
+  area    Area  @relation(fields: [area_id], references: [id])
 
   @@map("zones")
 }
@@ -191,7 +184,6 @@ model Zone {
 model Type {
   name     String
   id       Int       @id @default(autoincrement())
-  agents   Agent[]
   pos      Pos[]
   subtypes Subtype[]
 
@@ -200,23 +192,22 @@ model Type {
 
 model Subtype {
   name    String
-  id      Int     @id @default(autoincrement())
+  id      Int    @id @default(autoincrement())
   type_id Int
-  agents  Agent[]
   pos     Pos[]
-  type    Type    @relation(fields: [type_id], references: [id])
+  type    Type   @relation(fields: [type_id], references: [id])
 
   @@map("subtypes")
 }
 
 model AuditLog {
-  id         String      @id @default(uuid())
-  entity     AuditEntity
+  id         String   @id @default(uuid())
+  entity     Modules
   user_name  String
   user_email String
-  action     AuditAction
+  action     Actions
   changes    Json
-  created_at DateTime    @default(now())
+  created_at DateTime @default(now())
 
   @@map("audit_logs")
 }
@@ -240,53 +231,101 @@ model ResetPasswordToken {
   @@map("password_reset_tokens")
 }
 
+model Group {
+  id          String            @id @default(uuid())
+  name        String
+  description String?
+  memberships Membership[]
+  permissions GroupPermission[]
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @default(now())
+
+  @@map("groups")
+}
+
+model Membership {
+  user_id  String
+  group_id String
+
+  group Group @relation(fields: [group_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+
+  @@id([user_id, group_id])
+  @@map("memberships")
+}
+
+model GroupPermission {
+  id       String    @id @default(uuid())
+  group_id String
+  module   Modules
+  action   Actions[]
+
+  group Group @relation(fields: [group_id], references: [id])
+
+  @@unique([group_id, module])
+  @@map("group_permissions")
+}
+
 enum AgentType {
   lotaria_nacional
   revendedor
 }
 
 enum Genre {
-  masculino
-  feminino
+  male
+  female
 }
 
 enum AgentStatus {
-  ativo
-  negado
-  agendado
-  apto
+  active
+  denied
+  scheduled
+  approved
 }
 
 enum TerminalStatus {
-  em_campo
-  formacao
+  ready
+  on_field
+  training
   stock
-  avaria
-  manutencao
+  broken
+  maintenance
 }
 
 enum LicenceStatus {
-  livre
-  em_uso
+  free
+  used
+}
+
+enum PosStatus {
+  pending
+  approved
+  active
+  denied
 }
 
 enum UserRole {
+  user
   dev
-  super_admin
+  admin
   area_manager
   supervisor
 }
 
-enum AuditAction {
-  create
-  update
-  delete
+enum Modules {
+  POS
+  USER
+  AGENT
+  LICENCE
+  TERMINAL
+  SIM_CARD
 }
 
-enum AuditEntity {
-  pos
-  user
-  agent
-  licence
-  terminal
+enum Actions {
+  READ
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  IMPORT
 }

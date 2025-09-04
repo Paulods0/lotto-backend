@@ -1,4 +1,0 @@
-id,id_reference,first_name,last_name,genre,phone_number,afrimoney_number,agent_type,bi_number,status,created_at,area_id,city_id,type_id,zone_id,province_id,subtype_id
-ea9b3a45-91c0-4e94-93be-7de84e63445f,90001,Juclénio,António,masculino,941685402,952366605,lotaria_nacional,10290493LA043,pendente,2025-07-29 14:11:06.162,,,,,,
-c77dba44-0f11-483a-9bee-3b26d17e71bb,10001,Erineu ,António,masculino,941685402,941685402,revendedor,19894282942LA024,pendente,2025-07-29 14:13:02.66,,,,,,
-510004b8-641c-422e-9d74-02e0af8d5068,90002,Paulo,Luguenda,masculino,941685402,952366605,lotaria_nacional,10290493LA043,inativo,2025-07-31 07:00:57.477,4,,1,17,1,

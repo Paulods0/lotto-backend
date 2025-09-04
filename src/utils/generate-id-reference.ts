@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma';
-import { AgentType } from '../validations/agent/create.schema';
+import { AgentType } from '../schemas/agent/create.schema';
 
 export async function generateIdReference(agentType: AgentType) {
   try {

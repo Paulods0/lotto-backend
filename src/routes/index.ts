@@ -1,14 +1,16 @@
 import { Router } from 'express';
-import posRouter from './pos.routes';
-import authRouter from './auth.router';
-import userRouter from './user.routes';
-import agentRouter from './agent.routes';
-import licenceRouter from './licence.routes';
-import terminalRouter from './terminal.routes';
-import auditLogRouter from './audit-log.routes';
+import posRouter from '../features/pos/routes';
+import agentRouter from '../features/agent/routes';
+import userRouter from '../features/user/routes';
+import authRouter from '../features/auth/auth.router';
+import simCardRouter from '../features/sim-card/routes';
+import licenceRouter from '../features/licence/routes';
+import groupRouter from '../features/group/routes';
+import auditLogRouter from '../features/audit-log/routes';
 import { authenticate } from '../middleware/auth/authenticate';
-import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from './references.routes';
-import { handle as refreshTokenController } from '../controllers/auth/refresh-token.controller';
+import terminalRouter from '../features/terminal/routes';
+import { refreshTokenController } from '../features/auth/controllers/refresh-token.controller';
+import { adminRoutes, areasRoutes, provincesRoutes, typesRoutes } from '../features/references/routes';
 
 const router = Router();
 
@@ -19,18 +21,19 @@ router.use('/auth', authRouter);
 router.post('/refresh-token', refreshTokenController);
 
 // Main routers
-router.use('/users', authenticate, userRouter);
+router.use('/groups', groupRouter);
 router.use('/pos', authenticate, posRouter);
+router.use('/users', authenticate, userRouter);
 router.use('/agents', authenticate, agentRouter);
 router.use('/licences', authenticate, licenceRouter);
+router.use('/sim-cards', authenticate, simCardRouter);
 router.use('/terminals', authenticate, terminalRouter);
 
 // Other routers
-router.use('/admins', authenticate, adminRoutes);
-router.use('/types', authenticate, typesRoutes);
 router.use('/areas', authenticate, areasRoutes);
+router.use('/types', authenticate, typesRoutes);
+router.use('/admins', authenticate, adminRoutes);
 router.use('/provinces', authenticate, provincesRoutes);
-
 router.use('/audit-logs', authenticate, auditLogRouter);
 
 export default router;
