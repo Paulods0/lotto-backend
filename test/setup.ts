@@ -11,7 +11,6 @@ export let userId: string;
 export let adminId: number;
 export let provinceId: number;
 export let cityId: number;
-export let simCardId: string;
 
 const password = 'msftsrep0.';
 
@@ -37,7 +36,6 @@ afterAll(async () => await prisma.$disconnect());
 async function seedData() {
   const { user } = await createUserSeed();
   await createAdminSeed();
-  await createSimCardSeed();
   await createProvinceAndCitySeed();
   await createIdReferenceSeed();
 
@@ -124,9 +122,4 @@ async function createAdminSeed() {
   });
 
   adminId = admin.id;
-}
-
-async function createSimCardSeed() {
-  const simCard = await prisma.simCard.create({ data: { number: 941685402 } });
-  simCardId = simCard.id;
 }

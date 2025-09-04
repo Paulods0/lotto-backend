@@ -92,6 +92,36 @@ describe('E2E - Agent', () => {
     expect(agentList[1].first_name).toBe('Délcio');
     expect(agentList[1].id_reference).toBe(1001);
   });
+
+  it('should be able to reset agent', async () => {
+    const { id } = await createAgent();
+
+    const { id: posId } = await createPos();
+    const { id: terminalId } = await createTerminal();
+
+    const data = makeAgent({
+      terminal_id: terminalId,
+      pos_id: posId,
+    });
+
+    await auth(request(app).put(`/api/agents/${id}`)).send(data);
+
+    const agent = await getAgent(id);
+    console.log('Agent :', agent);
+
+    expect(agent.pos).toBeDefined();
+    expect(agent.terminal).toBeDefined();
+
+    const { status, body } = await auth(request(app).put(`/api/agents/reset/${id}`));
+    expect(status).toBe(200);
+    expect(body.message).toBe('Agente resetado com sucesso');
+
+    const agentReseted = await getAgent(id);
+    console.log('Agent reseted :', agentReseted);
+
+    expect(agentReseted.pos).toBe(null);
+    expect(agentReseted.terminal).toBe(null);
+  });
 });
 
 export async function createAgent(data?: Partial<CreateAgentDTO>) {

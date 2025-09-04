@@ -19,8 +19,8 @@ export const agentSchema = z.object({
   status: agentStatus,
   training_date: z.date(),
   created_at: z.date(),
-  terminal: terminalSchema,
-  pos: posSchema,
+  terminal: terminalSchema.optional(),
+  pos: posSchema.optional(),
 });
 
 export type Agent = z.infer<typeof agentSchema>;

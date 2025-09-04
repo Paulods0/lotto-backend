@@ -5,7 +5,7 @@ import { CreatePosDTO } from '../schemas/create-pos.schema';
 import { deleteCache } from '../../../utils/redis/delete-cache';
 
 export async function createPosService({ user, ...data }: CreatePosDTO) {
-  const response = await prisma.$transaction(async (tx) => {
+  const response = await prisma.$transaction(async tx => {
     const posCreated = await tx.pos.create({
       data: {
         coordinates: data.coordinates,

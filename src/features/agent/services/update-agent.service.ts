@@ -5,9 +5,10 @@ import { RedisKeys } from '../../../utils/redis/keys';
 import { deleteCache } from '../../../utils/redis/delete-cache';
 import { UpdateAgentDTO } from '../schemas/update-agent.schema';
 import { connectOrDisconnect } from '../../../utils/connect-disconnect';
+import { AgentStatus } from '../@types/agent.t';
 
 export async function updateAgentService({ user, ...data }: UpdateAgentDTO) {
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async tx => {
     const agent = await tx.agent.findUnique({
       where: {
         id: data.id,
@@ -15,6 +16,8 @@ export async function updateAgentService({ user, ...data }: UpdateAgentDTO) {
     });
 
     if (!agent) throw new NotFoundError('Agente não encontrado');
+
+    let status: AgentStatus = agent.status;
 
     if (data.pos_id) {
       const pos = await tx.pos.findUnique({
@@ -26,6 +29,8 @@ export async function updateAgentService({ user, ...data }: UpdateAgentDTO) {
       if (!pos) {
         throw new NotFoundError('POS não encontrado');
       }
+
+      status = 'active';
     }
 
     if (data.terminal_id) {
@@ -43,6 +48,7 @@ export async function updateAgentService({ user, ...data }: UpdateAgentDTO) {
     const updated = await tx.agent.update({
       where: { id: data.id },
       data: {
+        status,
         first_name: data.first_name,
         last_name: data.last_name,
         bi_number: data.bi_number,

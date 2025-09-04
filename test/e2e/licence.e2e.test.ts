@@ -1,7 +1,6 @@
 import app from '../../src';
 import request from 'supertest';
 import { auth } from '../utils/auth';
-import { adminId, token } from '../setup';
 import { makeLicence } from '../factories/make-licence';
 import { Licence } from '../../src/features/licence/@types/licence.t';
 import { CreateLicenceDTO } from '../../src/features/licence/schemas/create-licence.schema';

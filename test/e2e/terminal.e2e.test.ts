@@ -4,7 +4,7 @@ import { auth } from '../utils/auth';
 import { Terminal } from '../../src/features/terminal/@types/terminal.t';
 import { makeTerminal, updateTerminal } from '../factories/make-terminal';
 import { CreateTerminalDTO } from '../../src/features/terminal/schemas/create-terminal.schema';
-import { simCardId } from '../setup';
+import { createSimCard } from './sim-card.e2e.test';
 
 describe('E2E - Terminal', () => {
   it('should be able to create a terminal and fetch it', async () => {
@@ -25,6 +25,7 @@ describe('E2E - Terminal', () => {
 
   it('should be able to update a terminal', async () => {
     const response = await createTerminal();
+    const { id: simCardId } = await createSimCard();
     const terminalId = response.id;
 
     const updatedTerminal = updateTerminal({
